@@ -16,7 +16,7 @@ struct LC_MMSE_NS_State_;
 
 typedef struct LC_MMSE_NS_State_ LC_MMSE_NS_State;
 
-LC_MMSE_NS_State *lc_mmse_ns_init(int frame_size, int sampling_rate, float denoise_dB);
+LC_MMSE_NS_State *lc_mmse_ns_init(int sample_rate, int frame_size, float denoise_dB);
 
 void lc_mmse_ns_set_echo_state(LC_MMSE_NS_State *st, SpeexEchoState *echo_state);
 

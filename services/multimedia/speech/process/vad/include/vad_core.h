@@ -16,7 +16,7 @@
 #ifndef WEBRTC_COMMON_AUDIO_VAD_VAD_CORE_H_
 #define WEBRTC_COMMON_AUDIO_VAD_VAD_CORE_H_
 
-#include "signal_processing_library.h"
+#include "common_audio/signal_processing/include/signal_processing_library.h"
 #include "typedefs.h"
 
 enum { kNumChannels = 6 };  // Number of frequency bands (named channels).

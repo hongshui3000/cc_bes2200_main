@@ -35,7 +35,11 @@
 #ifdef VQE_SIMULATE
 void __ae_log_print(const char *tag, const char *fmt, ...);
 #else
+#ifdef __TWS__
 #define __ae_log_print(tag, fmt, ...) hal_trace_printf_with_tag(HAL_TRACE_LEVEL_0, tag, fmt, ##__VA_ARGS__)
+#else
+#define __ae_log_print(tag, fmt, ...) hal_trace_printf_with_tag(tag, fmt, ##__VA_ARGS__)
+#endif
 #endif
 
 #if LOG_NDEBUG

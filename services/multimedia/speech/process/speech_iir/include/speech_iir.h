@@ -36,7 +36,7 @@ int speech_iir_deinit(void);
 SPEECH_IIR_STATE_T *speech_iir_create(const SPEECH_IIR_CFG_T *cfg);
 
 // Destory a speech iir instance
-int speech_iir_destory(SPEECH_IIR_STATE_T *inst);
+int speech_iir_destroy(SPEECH_IIR_STATE_T *inst);
 
 // Just use modify instance configure
 int speech_iir_set_config(SPEECH_IIR_STATE_T *inst, const SPEECH_IIR_CFG_T *cfg);

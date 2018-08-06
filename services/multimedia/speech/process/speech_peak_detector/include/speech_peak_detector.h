@@ -28,7 +28,7 @@ typedef void *SPEECH_PEAK_DETECTOR_STATE_T;
 SPEECH_PEAK_DETECTOR_STATE_T *speech_peak_detector_create(SPEECH_PEAK_DETECTOR_CFG_T *cfg, int frame_size, int sample_rate);
 
 // Destory a speech peak_detector instance
-int speech_peak_detector_destory(SPEECH_PEAK_DETECTOR_STATE_T *inst);
+int speech_peak_detector_destroy(SPEECH_PEAK_DETECTOR_STATE_T *inst);
 
 // Just use modify instance configure
 int speech_peak_detector_set_config(SPEECH_PEAK_DETECTOR_STATE_T *inst, SPEECH_PEAK_DETECTOR_CFG_T *cfg);

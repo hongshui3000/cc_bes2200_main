@@ -159,5 +159,6 @@ int app_capture_resample_run(struct APP_RESAMPLE_T *resamp, uint8_t *buf, uint32
 void app_resample_tune(struct APP_RESAMPLE_T *resamp, uint32_t rate, int32_t sample, uint32_t ms);
 void app_resample_set_tune_factor(struct APP_RESAMPLE_T *resamp, float factor);
 float app_resample_get_tune_factor(void);
+int bt_sco_player_restart_requeset(bool needrestart);
 
 #endif

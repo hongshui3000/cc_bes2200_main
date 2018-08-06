@@ -1,7 +1,10 @@
 
 cur_dir := $(dir $(lastword $(MAKEFILE_LIST)))
 
-obj_c := $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/codec/codecs/cvsd/src/*.c))
+obj_c :=
+obj_cpp :=
+obj_s :=
+
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/common/src/*.c))
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/speech_dc_filter/src/*.c))
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/speech_peak_detector/src/*.c))
@@ -9,9 +12,8 @@ obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/resample/s
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/plc/src/*.c))
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/ns_and_ec/src/*.c))
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/application/Pcm8kCvsd/src/*.c))
-obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/signal_processing/src/*.c))
+#obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/signal_processing/src/*.c))
 
-obj_cpp := $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/codec/codecs/cvsd/src/*.cpp))
 obj_cpp += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/common/src/*.cpp))
 obj_cpp += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/speech_dc_filter/src/*.cpp))
 obj_cpp += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/speech_peak_detector/src/*.cpp))
@@ -19,7 +21,7 @@ obj_cpp += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/resample
 obj_cpp += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/plc/src/*.cpp))
 obj_cpp += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/ns_and_ec/src/*.cpp))
 obj_cpp += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/application/Pcm8kCvsd/src/*.cpp))
-obj_cpp += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/signal_processing/src/*.cpp))
+#obj_cpp += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/signal_processing/src/*.cpp))
 
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)audio/process/anc/src/$(CHIP)/*.c))
 obj_cpp += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)audio/process/anc/src/$(CHIP)/*.cpp))
@@ -38,10 +40,25 @@ obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/ec2_float/
 # speech resample
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/iir_resample/src/*.c))
 
-ifeq ($(SPEECH_TX_2MIC_NS2),1)
+# speech eq
+obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/speech_eq/src/*.c))
+
+# ns3
+obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/speech_process_lib/modules/audio_processing/ns/noise_suppression_x.c))
+obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/speech_process_lib/modules/audio_processing/ns/nsx_core.c))
+obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/speech_process_lib/modules/audio_processing/ns/nsx_core_c.c))
+obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/speech_process_lib/common_audio/signal_processing/*.c))
+obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/ns3/src/*.c))
+
+# noise gate
+obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/speech_noise_gate/src/*.c))
+
+# compexp
+obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/compexp/src/*.c))
+
+# dual mic denoise2
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/coherent_denoise/src/*.c))
 obj_cpp += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/coherent_denoise/src/*.cpp))
-endif
 
 # ifeq ($(SPEECH_IIR),1)
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/speech_iir/src/*.c))
@@ -84,7 +101,7 @@ obj_cpp += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)rbcodec/dsp/common/*.cp
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)rbcodec/metadata/metadata*.c))
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)rbcodec/metadata/replaygain.c))
 obj_cpp += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)rbcodec/eq.cpp))
-obj_s := $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)rbcodec/dsp/filter_process.S))
+obj_s += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)rbcodec/dsp/filter_process.S))
 endif
 
 ifeq ($(RB_CODEC),1)
@@ -127,16 +144,11 @@ obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)fm/src/*.c))
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/recognition/src/*.c))
 obj_cpp += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/recognition/src/*.cpp))
 
-ifeq ($(SPEECH_TX_AGC),1)
-obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/speech_process_lib/common_audio/signal_processing/division_operations.c))
-obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/speech_process_lib/common_audio/signal_processing/resample_by_2.c))
-obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/speech_process_lib/common_audio/signal_processing/resample_by_2_internal.c))
-obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/speech_process_lib/common_audio/signal_processing/spl_sqrt.c))
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/speech_process_lib/modules/audio_processing/agc/legacy/digital_agc.c))
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/agc/src/agc.c))
-endif
 
 ifeq ($(SPEECH_TX_AEC2),1)
+obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/speech_aec2/src/*.c))
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/speech_aec_fixed/src/*.c))
 endif
 
@@ -164,7 +176,9 @@ ccflags-y := \
 	-Irtos/rtos \
 	-Iplatform/dsp/ \
 	-Irtos/rtx/TARGET_CORTEX_M \
-	-Iservices/multimedia/speech/codec/codecs/cvsd/include \
+	-Iservices/multimedia/speech/process/speech_aec2/include \
+	-Iservices/multimedia/speech/process/speech_aec_fixed/include \
+	-Iservices/multimedia/speech/process/speech_process_lib \
 	-Iservices/multimedia/speech/process/common/include \
 	-Iservices/multimedia/speech/process/speech_iir/include \
 	-Iservices/multimedia/speech/process/speech_dc_filter/include \
@@ -177,13 +191,19 @@ ccflags-y := \
 	-Iservices/multimedia/speech/process/recognition/include \
 	-Iservices/multimedia/speech/process/ec2_float/include \
 	-Iservices/multimedia/speech/process/iir_resample/include \
-	-Iservices/multimedia/audio/process/anc/include \
-	-Iservices/multimedia/audio/process/adp/include \
-	-Iservices/multimedia/speech/application/Pcm8kCvsd/include \
+	-Iservices/multimedia/speech/process/speech_eq/include \
+	-Iservices/multimedia/speech/process/agc/include \
+	-Iservices/multimedia/speech/process/ns3/include \
+	-Iservices/multimedia/speech/process/speech_noise_gate/include \
+	-Iservices/multimedia/speech/process/compexp/include \
 	-Iservices/multimedia/speech/process/lc_mmse_ns/include \
 	-Iservices/multimedia/speech/process/coherent_denoise/include \
 	-Iservices/multimedia/speech/process/dual_mic_denoise/include \
 	-Iservices/multimedia/speech/process/far_field_speech_enhancement/include \
+	-Iservices/multimedia/speech/process/vad/include \
+	-Iservices/multimedia/speech/codec/adpcm \
+	-Iservices/multimedia/speech/application/Pcm8kCvsd/include \
+	-Iservices/multimedia/speech/codec/codecs/cvsd/include \
 	-Iservices/multimedia/rbcodec \
 	-Iservices/multimedia/rbcodec/codecs \
 	-Iservices/multimedia/rbcodec/codecs/lib \
@@ -192,6 +212,8 @@ ccflags-y := \
 	-Iservices/multimedia/rbcodec/test \
 	-Iservices/multimedia/rbcodec/metadata \
 	-Iservices/multimedia/audio_dump/include \
+	-Iservices/multimedia/audio/process/anc/include \
+	-Iservices/multimedia/audio/process/adp/include \
 	-Iservices/multimedia/audio/process/resample/include \
 	-Iservices/multimedia/audio/process/filters/include \
 	-Iservices/multimedia/audio/process/filters/cfg \
@@ -200,28 +222,16 @@ ccflags-y := \
 	-Iservices/multimedia/fm/inc \
 	-Iservices/nv_section/aud_section \
 	-Iservices/nv_section/include \
-	-Iservices/multimedia/speech/process/vad/include/ \
-	-Iservices/multimedia/speech/process/signal_processing/include \
 	-Iservices/bt_profiles/inc \
-	-Iservices/multimedia/speech/codec/adpcm \
 
-ifeq ($(SPEECH_TX_AGC),1)
-ccflags-y += \
-	-Iservices/multimedia/speech/process/agc/include \
-	-Iservices/multimedia/speech/process/speech_process_lib
-endif
-
-ifeq ($(SPEECH_TX_AEC2),1)
-ccflags-y += \
-	-Iservices/multimedia/speech/process/common/include \
-	-Iservices/multimedia/speech/process/speech_aec_fixed/include
-
+# ec2
 ccflags-y += -DVOS_ARM -D_MED_C89_ -DUSE_MED_MALLOC -DUSE_DSPFNS -DMED_USE_KISS_FFT -DSPEECH_STREAM_UNIT_128
-endif
 
 # ec2 float
 ccflags-y += -DUSE_MED_MALLOC -DUSE_CMSIS_F32_FFT
 
+# ns3
+ccflags-y += -DUSE_MED_MALLOC -D__ARMEL__ -DUSE_FFTWRAP -DWEBRTC_ARCH_ARM_V7
 
 
 ccflags-y += -DFLAC__INTEGER_ONLY_LIBRARY -DVERSION="\"1.3.1\"" -DHAVE_CONFIG_H

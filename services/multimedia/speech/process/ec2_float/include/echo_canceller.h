@@ -20,7 +20,7 @@ typedef struct
     float target_supp;
 } EcConfig;
 
-EcState *ec_init(int sample_rate, int frame_size, EcConfig *config);
+EcState *ec_init(int sample_rate, int frame_size, const EcConfig *config);
 
 void ec_destroy(EcState *st);
 

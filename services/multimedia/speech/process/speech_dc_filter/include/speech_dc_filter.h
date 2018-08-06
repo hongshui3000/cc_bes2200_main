@@ -25,7 +25,7 @@ int speech_dc_filter_deinit(void);
 SPEECH_DC_FILTER_STATE_T *speech_dc_filter_create(void);
 
 // Destory a speech dc_filter instance
-int speech_dc_filter_destory(SPEECH_DC_FILTER_STATE_T *inst);
+int speech_dc_filter_destroy(SPEECH_DC_FILTER_STATE_T *inst);
 
 // Just use modify instance configure
 // int speech_dc_filter_set_config(SPEECH_DC_FILTER_STATE_T *inst, SPEECH_DC_FILTER_CFG_T *cfg);

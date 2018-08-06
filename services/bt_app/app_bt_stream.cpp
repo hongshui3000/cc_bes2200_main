@@ -92,7 +92,7 @@ uint32_t anc_sco_spk_buf[ANC_SCO_SPK_BUF_SZ/4];
 uint8_t bt_sco_samplerate_ratio = 0;
 extern void us_fir_init(void);
 extern uint32_t voicebtpcm_pcm_resample (short* src_samp_buf, uint32_t src_smpl_cnt, short* dst_samp_buf);
-
+#endif
 extern "C" uint8_t is_sco_mode (void);
 
 static uint8_t bt_sco_mode;
@@ -106,7 +106,7 @@ extern "C" uint8_t __attribute__((section(".fast_text_sram")))  is_sbc_mode(void
     return bt_sbc_mode;
 }
 
-#endif
+
 
 uint32_t a2dp_audio_more_data(uint8_t *buf, uint32_t len);
 int a2dp_audio_init(void);
@@ -477,9 +477,7 @@ int bt_sbc_player(enum PLAYER_OPER_T on, enum APP_SYSFREQ_FREQ_T freq,uint32_t t
         audio_eq_close();
 #endif
         af_stream_close(AUD_STREAM_ID_0, AUD_STREAM_PLAYBACK);
-#ifdef __BT_ANC__
 		bt_sbc_mode = 0;
-#endif
         if (on == PLAYER_OPER_STOP) {
 #ifndef FPGA
 #ifdef BT_XTAL_SYNC
@@ -623,9 +621,8 @@ int bt_sbc_player(enum PLAYER_OPER_T on, enum APP_SYSFREQ_FREQ_T freq,uint32_t t
 #ifdef  __FPGA_FLASH__
             app_overlay_select(APP_OVERLAY_A2DP);
 #endif
-#ifdef __BT_ANC__
 			bt_sbc_mode = 1;
-#endif
+
         }
 
         if (on == PLAYER_OPER_START) {
@@ -953,6 +950,49 @@ uint8_t msbc_find_tx_sync(uint8_t *buff)
 static void tws_stop_sco_callback(uint32_t status, uint32_t param);
 
 uint8_t trigger_test=0;
+
+enum SCO_PLAYER_RESTART_STATUS_E
+{
+    SCO_PLAYER_RESTART_STATUS_IDLE,
+    SCO_PLAYER_RESTART_STATUS_STARTING,
+    SCO_PLAYER_RESTART_STATUS_ONPROCESS,
+}sco_player_restart_status;
+
+int bt_sco_player_restart_requeset(bool needrestart)
+{
+    switch (sco_player_restart_status)
+    {
+        case SCO_PLAYER_RESTART_STATUS_IDLE:
+            if (needrestart){
+                sco_player_restart_status = SCO_PLAYER_RESTART_STATUS_STARTING;
+            }else{
+                sco_player_restart_status = SCO_PLAYER_RESTART_STATUS_IDLE;
+            }
+            break;
+        case SCO_PLAYER_RESTART_STATUS_STARTING:
+        case SCO_PLAYER_RESTART_STATUS_ONPROCESS:
+        default:            
+            if (needrestart){
+                // do nothing
+            }else{
+                sco_player_restart_status = SCO_PLAYER_RESTART_STATUS_IDLE;
+            }
+            break;
+    }
+
+    return 0;
+}
+
+inline bool bt_sco_player_need_restart(void)
+{
+    bool nRet = false;
+    if (sco_player_restart_status == SCO_PLAYER_RESTART_STATUS_STARTING){
+        sco_player_restart_status = SCO_PLAYER_RESTART_STATUS_ONPROCESS;
+        nRet = true;
+    }
+    return nRet;
+}
+
 FRAM_TEXT_LOC static uint32_t bt_sco_btpcm_playback_data(uint8_t *buf, uint32_t len)
 {
 #if  defined(HFP_1_6_ENABLE)
@@ -977,10 +1017,13 @@ FRAM_TEXT_LOC static uint32_t bt_sco_btpcm_playback_data(uint8_t *buf, uint32_t 
           //  btdrv_set_bt_pcm_triggler_delay_reset((((BTDIGITAL_REG(0xd0224024) & 0x3f00)>>8) +(60-offset))%64);
            trigger_test = (((BTDIGITAL_REG(0xd0224024) & 0x3f00)>>8) +(60-offset))%64;
            TRACE("TX BUF ERROR trigger_test=%d",trigger_test);
-            app_audio_manager_sendrequest(APP_BT_STREAM_MANAGER_STOP,BT_STREAM_VOICE,BT_DEVICE_ID_1,MAX_RECORD_NUM,0,(uint32_t)tws_stop_sco_callback);
+           bt_sco_player_restart_requeset(true);
 
 //            app_tws_set_pcm_triggle();
             
+        }
+        if (bt_sco_player_need_restart()){
+           app_audio_manager_sendrequest(APP_BT_STREAM_MANAGER_STOP,BT_STREAM_VOICE,BT_DEVICE_ID_1,MAX_RECORD_NUM,0,(uint32_t)tws_stop_sco_callback);
         }
     }
 #endif
@@ -1100,8 +1143,9 @@ enum BTSTREAM_PP_T{
 
 static enum BTSTREAM_PP_T bt_sco_codec_playback_cache_pp = PP_PING;
 
-
+#ifdef __TWS_CALL_DUAL_CHANNEL__
 extern uint8_t slave_sco_active;
+#endif
 extern struct BT_DEVICE_T  app_bt_device;
 
 
@@ -1110,11 +1154,13 @@ static void tws_restart_voice_callback(uint32_t status, uint32_t param)
 
     uint8_t sco_state;
     uint32_t lock = int_lock();
+#ifdef __TWS_CALL_DUAL_CHANNEL__
     if(app_tws_mode_is_slave())
     {
         sco_state = slave_sco_active;
     }
     else
+#endif
     {
         sco_state = (app_bt_device.hf_audio_state[0] == HF_AUDIO_CON)?1:0;
     }
@@ -1134,11 +1180,13 @@ static void tws_stop_sco_callback(uint32_t status, uint32_t param)
 {
     uint8_t sco_state;
     uint32_t lock = int_lock();
+#ifdef __TWS_CALL_DUAL_CHANNEL__
     if(app_tws_mode_is_slave())
     {
         sco_state = slave_sco_active;
     }
     else
+#endif
     {
         sco_state = (app_bt_device.hf_audio_state[0] == HF_AUDIO_CON)?1:0;
     }
@@ -1154,6 +1202,7 @@ static void tws_stop_sco_callback(uint32_t status, uint32_t param)
   }
 }
 
+#ifdef __TWS_CALL_DUAL_CHANNEL__
 #define __TWS_RETRIGGER_VOICE__
 
 void bt_sco_check_pcm(void)
@@ -1178,7 +1227,7 @@ void bt_sco_check_pcm(void)
     }
 #endif
 }
-
+#endif
 
 
 extern uint32_t sco_active_bak;
@@ -1440,7 +1489,6 @@ int bt_sco_player(bool on, enum APP_SYSFREQ_FREQ_T freq,uint32_t trigger_ticks)
         app_audio_mempool_get_buff(&bt_audio_buff, stream_cfg.data_size);
         stream_cfg.data_ptr = BT_AUDIO_CACHE_2_UNCACHE(bt_audio_buff);
 #ifdef __BT_ANC__
-        bt_sco_mode = 1;
        // stream_cfg.data_size = ANC_SCO_MIC_BUF_SZ;          // 15ms per int
        // stream_cfg.data_ptr = BT_AUDIO_CACHE_2_UNCACHE(anc_sco_mic_buf);
 		//stream_cfg.sample_rate = AUD_SAMPRATE_96000;
@@ -1450,6 +1498,8 @@ int bt_sco_player(bool on, enum APP_SYSFREQ_FREQ_T freq,uint32_t trigger_ticks)
        // ds_fir_init();
         us_fir_init();		
 #endif	
+        bt_sco_mode = 1;
+
         TRACE("capture sample_rate:%d, data_size:%d",stream_cfg.sample_rate,stream_cfg.data_size);	
         af_stream_open(AUD_STREAM_ID_0, AUD_STREAM_CAPTURE, &stream_cfg);
 
@@ -1601,10 +1651,11 @@ int bt_sco_player(bool on, enum APP_SYSFREQ_FREQ_T freq,uint32_t trigger_ticks)
 		bt_sco_codec_playback_cache_pp = PP_PING;
 #endif
 #ifdef __BT_ANC__
-        bt_sco_mode = 0;
    //     damic_deinit();
   //      app_cap_thread_stop();
 #endif
+        bt_sco_mode = 0;
+
         voicebtpcm_pcm_audio_deinit();
 
 #ifndef FPGA

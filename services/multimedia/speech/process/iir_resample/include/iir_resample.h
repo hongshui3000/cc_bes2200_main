@@ -21,7 +21,7 @@ typedef struct IirResampleState_ IirResampleState;
 extern "C" {
 #endif
 
-IirResampleState *iir_resample_init(enum IIR_RESAMPLE_MODE mode);
+IirResampleState *iir_resample_init(int frame_size, enum IIR_RESAMPLE_MODE mode);
 
 void iir_resample_destroy(IirResampleState *st);
 

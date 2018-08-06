@@ -22,6 +22,13 @@
 #include "tgt_hardware.h"
 #include "audio_dump.h"
 #include "iir_resample.h"
+#include "iir_process.h"
+#include "speech_noise_gate.h"
+#include "compexp.h"
+#include "ae_math.h"
+
+//#define SPEECH_ALGORITHMGAIN (DB2LIN(0))
+//#define SPEAKER_ALGORITHMGAIN (DB2LIN(0))
 
 /**
 //---------------------------8k, highpass---------------------------------
@@ -113,10 +120,13 @@ extern "C" {
 #include "Pcm8k_Cvsd.h"
 #endif
 
+#if defined(MSBC_PLC_ENCODER) && !defined(MSBC_PCM_PLC_ENABLE)
+#error "When enable MSBC_PLC_ENCODER, must enable MSBC_PCM_PLC_ENABLE!"
+#endif
+
 #if defined( SPEECH_TX_AEC ) || defined( SPEECH_TX_NS ) || defined(SPEECH_RX_NS )
 #include "speex/speex_echo.h"
 #include "speex/speex_preprocess.h"
-static short *e_buf;
 #endif
 
 #if defined( SPEECH_TX_AEC )
@@ -137,6 +147,7 @@ static  void *speech_lc;
 
 #if defined( SPEECH_TX_AEC ) || defined( SPEECH_TX_AEC2 ) || defined(SPEECH_TX_AEC2FLOAT)
 static short *echo_buf;
+static short *e_buf;
 #endif
 
 #if defined(SPEECH_TX_AEC2)
@@ -172,6 +183,48 @@ LC_MMSE_NS_FLOAT_State *speech_tx_ns2f_st = NULL;
 LC_MMSE_NS_FLOAT_State *speech_rx_ns2f_st = NULL;
 #endif
 
+#if defined(SPEECH_TX_NS3) || defined(SPEECH_RX_NS3)
+#include "ns3.h"
+#endif
+
+#if defined(SPEECH_TX_NS3)
+static Ns3State *speech_tx_ns3_st = NULL;
+const Ns3Config speech_tx_ns3_cfg = {
+    .mode = NS3_SUPPRESSION_HIGH,
+};
+#endif
+
+#if defined(SPEECH_RX_NS3)
+static Ns3State *speech_rx_ns3_st = NULL;
+const Ns3Config speech_rx_ns3_cfg = {
+    .mode = NS3_SUPPRESSION_HIGH,
+};
+#endif
+
+#if defined(SPEECH_TX_NOISE_GATE)
+static NoisegateState *speech_tx_noisegate_st = NULL;
+const NoisegateConfig speech_tx_noisegate_cfg = {
+    .data_threshold = 640,
+    .data_shift = 1,
+    .factor_up = 0.001f,
+    .factor_down = 0.5f,
+};
+#endif
+
+#if defined(SPEECH_TX_COMPEXP)
+static CompexpState *speech_tx_compexp_st = NULL;
+const CompexpConfig speech_tx_compexp_cfg = {
+    .comp_threshold = -10.f,
+    .comp_slope = 0.5f,
+    .expand_threshold = -21.f,
+    .expand_slope = -0.5f,
+    .attack_time = 0.01f,
+    .release_time = 0.1f,
+    .makeup_gain = 6,
+    .delay = 128,
+};
+#endif
+
 #if defined(SPEECH_TX_2MIC_NS)
 #include "dual_mic_denoise.h"
 extern const DUAL_MIC_DENOISE_CFG_T dual_mic_denoise_cfg;
@@ -200,37 +253,42 @@ static AgcState *speech_rx_agc_st = NULL;
 #endif
 
 #if defined(SPEECH_TX_EQ) || defined(SPEECH_RX_EQ)
-#include "speech_iir.h"
+#include "speech_eq.h"
 #endif
 
 #if defined(SPEECH_TX_EQ)
-void *speech_tx_eq_st = NULL;
-SPEECH_RX_EQ_PCOEFFS_T speech_tx_eq_8k_pCoeffs[] = {
-    // fs: 8000, type: highpass, gain: 0.000000, freq: 100.000000, Q: 0.700000
-    {0.945472, -1.890945, 0.945472, -1.888026, 0.893864},    
+static EqState *speech_tx_eq_st = NULL;
+// A Weighting 8k
+const EqConfigRaw speech_tx_eq_cfg_8k = {
+    .gain = -4.0049f,
+    .num = 3,
+    .param = {
+        {0.1038f, -0.3604f, 1.0000f, 0.0000f, -1.0000f},
+        {-0.2644f, -0.6014f, 1.0000f, 0.0000f, -1.0000f},
+        {-1.9679f, 0.9682f, 1.0000f, -2.0000f, 1.0000f},
+    },
 };
-
-SPEECH_RX_EQ_PCOEFFS_T speech_tx_eq_16k_pCoeffs[] = {
-    // fs: 16000, type: highpass, gain: 0.000000, freq: 100.000000, Q: 0.700000
-    {0.972347, -1.944695, 0.972347, -1.943945, 0.945444},
+// A Weighting 16k
+const EqConfigRaw speech_tx_eq_cfg_16k = {
+    .gain = -5.4899f,
+    .num = 3,
+    .param = {
+        {0.8216f, 0.1687f, 1.0000f, 2.0000f, 1.0000f},
+        {-1.7055f, 0.7160f, 1.0000f, -2.0000f, 1.0000f},
+        {-1.9839f, 0.9840f, 1.0000f, -2.0000f, 1.0000f},
+    },
 };
-// extern SPEECH_RX_EQ_PCOEFFS_T speech_tx_eq_8k_pCoeffs[];
-// extern SPEECH_RX_EQ_PCOEFFS_T speech_tx_eq_16k_pCoeffs;
 #endif
 
 #if defined(SPEECH_RX_EQ)
-void *speech_rx_eq_st = NULL;
-SPEECH_RX_EQ_PCOEFFS_T speech_rx_eq_8k_pCoeffs[] = {
-    // fs: 8000, type: highpass, gain: 0.000000, freq: 100.000000, Q: 0.700000
-    {0.945472, -1.890945, 0.945472, -1.888026, 0.893864},
+static EqState *speech_rx_eq_st = NULL;
+const EqConfig speech_rx_eq_cfg = {
+    .gain = 1.f,
+    .num = 1,
+    .param = {
+        {IIR_BIQUARD_HPF, 60, 0, 0.707f},
+    },
 };
-
-SPEECH_RX_EQ_PCOEFFS_T speech_rx_eq_16k_pCoeffs[] = {
-    // fs: 16000, type: highpass, gain: 0.000000, freq: 100.000000, Q: 0.700000
-    {0.972347, -1.944695, 0.972347, -1.943945, 0.945444},
-};
-// extern SPEECH_RX_EQ_PCOEFFS_T speech_rx_eq_8k_pCoeffs;
-// extern SPEECH_RX_EQ_PCOEFFS_T speech_rx_eq_16k_pCoeffs;
 #endif
 
 #if defined(HFP_1_6_ENABLE) && !defined(MSBC_16K_SAMPLE_RATE)
@@ -290,10 +348,23 @@ unsigned char *temp_msbc_buf;
 unsigned char *temp_msbc_buf1;
 static char need_init_encoder = true;
 #if defined(MSBC_PLC_ENABLE)
-static char msbc_need_check_sync_header = 0;
 PLC_State msbc_plc_state;
 #endif
+
+#if defined(MSBC_PLC_ENCODER)
+#define MSBC_PLC_ENCODER_SIZE 57
+#define MSBC_PLC_ENCODER_BUFFER_SIZE 193
+#define MSBC_PLC_ENCODER_BUFFER_OFFSET 73
+
+static SbcEncoder *msbc_plc_encoder;
+static SbcPcmData *msbc_plc_encoder_data;
+unsigned char *msbc_plc_encoder_buffer;
+short *msbc_plc_encoder_inbuffer;
+short *msbc_plc_output_pcmbuffer;
+#endif
+
 static bool msbc_input_valid = false;
+static uint32_t msbc_input_offset = 0;
 static SbcEncoder *msbc_encoder;
 static SbcPcmData msbc_encoder_pcmdata;
 static unsigned char msbc_counter = 0x08;
@@ -314,15 +385,19 @@ int store_voicebtpcm_m2p_buffer(unsigned char *buf, unsigned int len)
     unsigned int avail_size;
 
 #if defined(HFP_1_6_ENABLE)
+    static uint32_t error_cnt = 0;
     if (bt_sco_codec_is_msbc()){
+        uint8_t msbc_raw_sn = 0xff;        
+        uint8_t frame_num = 0;
         if (!msbc_input_valid){    
-            uint8_t msbc_raw_sn = 0xff;
             unsigned int i;
             for(i=0; i<len; i++){
                 if(!sco_parse_synchronization_header(&buf[i], &msbc_raw_sn) &&
                     0 == msbc_raw_sn){
                     TRACE("!!!!!!!!!!!input msbc find sync sn:%d offset:%d", msbc_raw_sn, i); 
                     msbc_input_valid = true;
+                    msbc_input_offset = i;
+                    error_cnt = 0;
                     break;
                 }            
             }
@@ -334,6 +409,32 @@ int store_voicebtpcm_m2p_buffer(unsigned char *buf, unsigned int len)
                 UNLOCK_APP_AUDIO_QUEUE();
             }
             return len;
+        }else{
+            sco_parse_synchronization_header(&buf[msbc_input_offset], &msbc_raw_sn);
+            frame_num = len/60;
+            if (frame_num%4 == 0){
+                if (msbc_raw_sn == 0){
+                    error_cnt = 0;
+                }else{
+                    TRACE("!!!!!!!!!!!!!!!!!!!!!! inputerror sn:%d cnt:%d", msbc_raw_sn, error_cnt);
+                    DUMP8("%02x ", &buf[msbc_input_offset], 6);
+                    error_cnt++;
+                }
+            }else if (frame_num == 2){
+                if ((msbc_raw_sn == 0) || 
+                    (msbc_raw_sn == 2)){
+                    error_cnt = 0;
+                }else{
+                    TRACE("!!!!!!!!!!!!!!!!!!!!!! inputerror sn:%d cnt:%d", msbc_raw_sn, error_cnt);
+                    DUMP8("%02x ", &buf[msbc_input_offset], 6);
+                    error_cnt++;
+                }
+            }else{
+                ASSERT(0, "%s err len", __func__, len);
+            }
+            if (error_cnt>10){
+                bt_sco_player_restart_requeset(true);
+            }
         }
     }
 #endif
@@ -571,14 +672,23 @@ int encode_cvsd_frame(unsigned char *pcm_buffer, unsigned int pcm_len)
 #endif
 
 #if defined(HFP_1_6_ENABLE)
+#define MSBC_SYNC_HACKER 1
 inline int sco_parse_synchronization_header(uint8_t *buf, uint8_t *sn)
 {
     uint8_t sn1, sn2;
+#if defined(MSBC_SYNC_HACKER)
+    if (((buf[0] != 0x01) && (buf[0] != 0x00))||
+        ((buf[1]&0x0f) != 0x08) ||
+        (buf[2] != 0xad)){
+        return -1;
+    }
+#else
     if ((buf[0] != 0x01) ||
         ((buf[1]&0x0f) != 0x08) ||
         (buf[2] != 0xad)){
         return -1;
     }
+#endif
     
     sn1 = (buf[1]&0x30)>>4;
     sn2 = (buf[1]&0xc0)>>6;
@@ -593,6 +703,336 @@ inline int sco_parse_synchronization_header(uint8_t *buf, uint8_t *sn)
 
     return 0;
 }
+
+#if 1
+int decode_msbc_frame(unsigned char *pcm_buffer, unsigned int pcm_len)
+{
+    int ttt = 0;
+    //int t = 0;
+#if defined(MSBC_PLC_ENABLE)
+    unsigned int sync_offset = 0;
+    uint8_t plc_type = 0;
+    uint8_t msbc_raw_sn = 0xff;    
+    static uint8_t msbc_raw_sn_pre;    
+    static bool msbc_find_first_sync = 0;
+#endif
+    int r = 0;
+    unsigned char *e1 = NULL, *e2 = NULL;
+    unsigned int len1 = 0, len2 = 0;
+    static SbcPcmData pcm_data;
+    static unsigned int msbc_next_frame_size;
+    XaStatus ret = XA_STATUS_SUCCESS;
+    unsigned short byte_decode = 0;
+
+    unsigned int pcm_offset = 0;
+    unsigned int pcm_processed = 0;
+
+#ifdef SPEECH_DATA_DUMP
+    short *pcm_buf = NULL;
+#endif
+
+#if defined(MSBC_PLC_ENABLE)
+    pcm_data.data = (unsigned char*)msbc_buf_before_plc;
+#else
+    pcm_data.data = (unsigned char*)pcm_buffer;
+#endif
+
+    if(need_init_decoder)
+    {
+        TRACE("init msbc decoder\n");
+        pcm_data.data = (unsigned char*)(pcm_buffer + pcm_offset);
+        pcm_data.dataLen = 0;
+#ifdef __SBC_FUNC_IN_ROM__
+        SBC_ROM_FUNC.SBC_InitDecoder(&msbc_decoder);
+#else
+        SBC_InitDecoder(&msbc_decoder);
+#endif
+
+        msbc_decoder.streamInfo.mSbcFlag = 1;
+        msbc_decoder.streamInfo.bitPool = 26;
+        msbc_decoder.streamInfo.sampleFreq = SBC_CHNL_SAMPLE_FREQ_16;
+        msbc_decoder.streamInfo.channelMode = SBC_CHNL_MODE_MONO;
+        msbc_decoder.streamInfo.allocMethod = SBC_ALLOC_METHOD_LOUDNESS;
+        /* Number of blocks used to encode the stream (4, 8, 12, or 16) */
+        msbc_decoder.streamInfo.numBlocks = MSBC_BLOCKS;
+        /* The number of subbands in the stream (4 or 8) */
+        msbc_decoder.streamInfo.numSubBands = 8;
+        msbc_decoder.streamInfo.numChannels = 1;
+#if defined(MSBC_PLC_ENABLE)
+        InitPLC(&msbc_plc_state);
+        msbc_raw_sn_pre = 0xff;
+        msbc_find_first_sync = true;
+#endif
+#if defined(MSBC_PLC_ENCODER)
+       SBC_InitEncoder(msbc_plc_encoder);
+       msbc_plc_encoder->streamInfo.mSbcFlag = 1;
+       msbc_plc_encoder->streamInfo.numChannels = 1;
+       msbc_plc_encoder->streamInfo.channelMode = SBC_CHNL_MODE_MONO;
+
+       msbc_plc_encoder->streamInfo.bitPool   = 26;
+       msbc_plc_encoder->streamInfo.sampleFreq  = SBC_CHNL_SAMPLE_FREQ_16;
+       msbc_plc_encoder->streamInfo.allocMethod = SBC_ALLOC_METHOD_LOUDNESS;
+       msbc_plc_encoder->streamInfo.numBlocks     = MSBC_BLOCKS;
+       msbc_plc_encoder->streamInfo.numSubBands = 8;
+#endif
+        need_init_decoder = false;
+    }
+
+get_again:
+    LOCK_APP_AUDIO_QUEUE();
+    len1 = len2 = 0;
+    e1 = e2 = 0;
+    r = APP_AUDIO_PeekCQueue(&voicebtpcm_m2p_queue, MSBC_FRAME_SIZE, &e1, &len1, &e2, &len2);
+    UNLOCK_APP_AUDIO_QUEUE();
+
+    if (r == CQ_ERR)
+    {
+        pcm_processed = pcm_len;
+        memset(pcm_buffer, 0, pcm_len);
+        TRACE( "msbc spk buff underflow");
+        goto exit;
+    }
+
+    if (!len1)
+    {
+        TRACE("len1 underflow %d/%d\n", len1, len2);
+        goto get_again;
+    }
+
+    if (len1 > 0 && e1)
+    {
+        memcpy(msbc_buf_before_decode, e1, len1);
+    }
+    if (len2 > 0 && e2)
+    {
+        memcpy(msbc_buf_before_decode + len1, e2, len2);
+    }
+
+
+    if (msbc_find_first_sync){
+
+        for(uint8_t i=0;i<MSBC_FRAME_SIZE-3;i++){
+            if(!sco_parse_synchronization_header(&msbc_buf_before_decode[i], &msbc_raw_sn)){
+                TRACE("[PLC]  msbc find sync sn:%d offset:%d", msbc_raw_sn, i); 
+                msbc_find_first_sync = false;
+                goto start_decoder;
+            }                
+        }
+        memset(pcm_buffer,0,pcm_len);
+        pcm_processed = pcm_len;
+        goto exit;
+    }    
+start_decoder:
+
+    if (sco_parse_synchronization_header(msbc_buf_before_decode, &msbc_raw_sn)){
+        plc_type = 2;
+    }else{
+        plc_type = 1;
+    }
+
+    //TRACE("sn %d %d", msbc_raw_sn_pre, msbc_raw_sn);
+
+    if (msbc_raw_sn_pre == 0xff && 
+        msbc_raw_sn != 0xff){
+        // do nothing            
+        msbc_raw_sn_pre = msbc_raw_sn;
+    }else{
+        if (msbc_raw_sn == 0xff){
+#if defined(MSBC_SYNC_HACKER)
+            TRACE("[PLC] sbchd err.");   
+#else
+            uint8_t zero_cnt = 0;    
+            for (zero_cnt=0; zero_cnt<MSBC_FRAME_SIZE; zero_cnt++){
+                if (msbc_buf_before_decode[zero_cnt] != 0)
+                    break;
+            } 
+            TRACE("[PLC] sbchd zero:%d", zero_cnt);   
+            DUMP8("%02x ", msbc_buf_before_decode, 6);
+#endif
+            msbc_raw_sn_pre = 0xff; //(msbc_raw_sn_pre+1)%4;                
+            plc_type = 2;
+        }else if (((msbc_raw_sn_pre+1)%4) == msbc_raw_sn){
+            // do nothing                     
+            msbc_raw_sn_pre = msbc_raw_sn;
+        }else{
+            TRACE("[PLC] seq err:%d/%d", msbc_raw_sn, msbc_raw_sn_pre);
+
+            //skip seq err
+            msbc_raw_sn_pre = 0xff;
+            plc_type = 0;
+        }
+    }
+
+
+#if defined(MSBC_PLC_ENABLE)
+    if (plc_type == 1)
+    {
+#ifdef __SBC_FUNC_IN_ROM__
+        ret = SBC_ROM_FUNC.SBC_DecodeFrames(&msbc_decoder, (unsigned char *)msbc_buf_before_decode, MSBC_FRAME_SIZE, &byte_decode,
+                                            &pcm_data, pcm_len - pcm_offset, msbc_eq_band_gain);
+#else
+        ret = SBC_DecodeFrames(&msbc_decoder, (unsigned char *)msbc_buf_before_decode, MSBC_FRAME_SIZE, &byte_decode,
+                               &pcm_data, pcm_len - pcm_offset, msbc_eq_band_gain);
+#endif
+        ttt = hal_sys_timer_get();
+#if defined(MSBC_PCM_PLC_ENABLE)
+        speech_plc_16000_AddToHistory((PlcSt_16000 *)speech_lc, (short *)pcm_data.data, pcm_len/2);
+        memcpy(pcm_buffer, pcm_data.data, pcm_len);
+#else
+        PLC_good_frame(&msbc_plc_state, (short *)pcm_data.data, (short *)pcm_buffer);
+#endif
+#ifdef SPEECH_DATA_DUMP
+        pcm_buf =  (short *)pcm_buffer;
+        for(uint32_t i=0; i< pcm_len/2; i++)
+        {
+            dump_buf[2*i] = pcm_buf[i];
+        }
+#endif
+    }
+    else if (plc_type == 2)
+    {
+#if defined(MSBC_PCM_PLC_ENABLE)
+        ttt = hal_sys_timer_get();
+#if defined(MSBC_PLC_ENCODER)
+        speech_plc_16000_Dofe((PlcSt_16000 *)speech_lc, (short *)pcm_buffer, msbc_plc_encoder_inbuffer, pcm_len/2);
+#else
+        speech_plc_16000_Dofe((PlcSt_16000 *)speech_lc, (short *)pcm_buffer, NULL, pcm_len/2);
+#endif
+#else
+        PLC_bad_frame(&msbc_plc_state, (short *)pcm_data.data, (short *)pcm_buffer);
+#endif
+#if defined(MSBC_PLC_ENCODER)
+        {      
+            uint16_t bytes_encoded = 0, buf_len = MSBC_ENCODE_PCM_LEN;
+            msbc_plc_encoder_data->data = (uint8_t *)(msbc_plc_encoder_inbuffer+MSBC_PLC_ENCODER_BUFFER_OFFSET);
+            msbc_plc_encoder_data->dataLen = pcm_len;
+            msbc_plc_encoder_data->numChannels = 1;
+            msbc_plc_encoder_data->sampleFreq = SBC_CHNL_SAMPLE_FREQ_16;
+            SBC_EncodeFrames(msbc_plc_encoder, msbc_plc_encoder_data, &bytes_encoded, msbc_plc_encoder_buffer, &buf_len, 0xFFFF);
+#ifdef __SBC_FUNC_IN_ROM__
+            SBC_ROM_FUNC.SBC_DecodeFrames(&msbc_decoder, msbc_plc_encoder_buffer, MSBC_FRAME_SIZE-3, &byte_decode,
+                                             &pcm_data, pcm_len - pcm_offset, msbc_eq_band_gain);
+#else
+            SBC_DecodeFrames(&msbc_decoder, msbc_plc_encoder_buffer, MSBC_FRAME_SIZE-3, &byte_decode,
+                                &pcm_data, pcm_len - pcm_offset, msbc_eq_band_gain);
+#endif
+        }
+#endif
+        TRACE("[PLC] b t:%d ret:%d\n", (hal_sys_timer_get()-ttt), ret);
+#ifdef SPEECH_DATA_DUMP
+        for(uint32_t i=0; i< pcm_len/2; i++)
+        {
+            dump_buf[2*i] = -32767;
+        }
+#endif
+    }
+    else
+#endif
+    {
+#ifdef __SBC_FUNC_IN_ROM__
+        ret = SBC_ROM_FUNC.SBC_DecodeFrames(&msbc_decoder, (unsigned char *)msbc_buf_before_decode, MSBC_FRAME_SIZE, &byte_decode,
+                                            &pcm_data, pcm_len - pcm_offset, msbc_eq_band_gain);
+#else
+        ret = SBC_DecodeFrames(&msbc_decoder, (unsigned char *)msbc_buf_before_decode, MSBC_FRAME_SIZE, &byte_decode,
+                               &pcm_data, pcm_len - pcm_offset, msbc_eq_band_gain);
+#endif  
+#if defined(MSBC_PCM_PLC_ENABLE)
+        speech_plc_16000_AddToHistory((PlcSt_16000 *)speech_lc, (short *)pcm_data.data, pcm_len/2);
+        memcpy(pcm_buffer, pcm_data.data, pcm_len);
+#endif
+#ifdef SPEECH_DATA_DUMP
+        for(uint32_t i=0; i< pcm_len/2; i++)
+        {
+            dump_buf[2*i] = 32767;
+        }
+#endif
+    }
+
+    // TRACE("[%s] pcm_len/2 = %d", __func__, pcm_len/2);
+#ifdef SPEECH_DATA_DUMP
+    pcm_buf =  (short *)pcm_buffer;
+    for(uint32_t i=0; i< pcm_len/2; i++)
+    {
+        dump_buf[2*i+1] = pcm_buf[i];
+    }
+#endif
+
+#ifdef SPEECH_DATA_DUMP
+    hal_product_test_trace_output((const unsigned char *)dump_buf, pcm_len*2);
+#endif
+
+    if(ret == XA_STATUS_FAILED)
+    {
+#if defined(MSBC_PCM_PLC_ENABLE)
+        ttt = hal_sys_timer_get();
+#if defined(MSBC_PLC_ENCODER)
+        speech_plc_16000_Dofe((PlcSt_16000 *)speech_lc, (short *)pcm_buffer, msbc_plc_encoder_inbuffer, pcm_len/2);
+#else
+        speech_plc_16000_Dofe((PlcSt_16000 *)speech_lc, (short *)pcm_buffer, NULL, pcm_len/2);
+#endif
+#else
+        PLC_bad_frame(&msbc_plc_state, (short *)pcm_data.data, (short *)pcm_buffer);
+#endif
+#if defined(MSBC_PLC_ENCODER)
+        {      
+            uint16_t bytes_encoded = 0, buf_len = MSBC_ENCODE_PCM_LEN;
+            msbc_plc_encoder_data->data = (uint8_t *)(msbc_plc_encoder_inbuffer+MSBC_PLC_ENCODER_BUFFER_OFFSET);
+            msbc_plc_encoder_data->dataLen = pcm_len;
+            msbc_plc_encoder_data->numChannels = 1;
+            msbc_plc_encoder_data->sampleFreq = SBC_CHNL_SAMPLE_FREQ_16;
+            SBC_EncodeFrames(msbc_plc_encoder, msbc_plc_encoder_data, &bytes_encoded, msbc_plc_encoder_buffer, &buf_len, 0xFFFF);
+#ifdef __SBC_FUNC_IN_ROM__
+            SBC_ROM_FUNC.SBC_DecodeFrames(&msbc_decoder, msbc_plc_encoder_buffer, MSBC_FRAME_SIZE-3, &byte_decode,
+                                             &pcm_data, pcm_len - pcm_offset, msbc_eq_band_gain);
+#else
+            SBC_DecodeFrames(&msbc_decoder, msbc_plc_encoder_buffer, MSBC_FRAME_SIZE-3, &byte_decode,
+                                &pcm_data, pcm_len - pcm_offset, msbc_eq_band_gain);
+#endif
+        }
+#endif
+        plc_type = 2;
+        TRACE("[PLC]sbcerr b t:%d ret:%d\n", (hal_sys_timer_get()-ttt), ret);
+    }
+
+
+    if (plc_type == 2)
+    {
+#if defined(MSBC_PLC_ENCODER)
+        need_init_decoder = false;
+        pcm_processed = pcm_data.dataLen;
+        pcm_data.dataLen = 0;
+#else
+        pcm_processed = pcm_len;
+#endif
+    }
+    else if(ret == XA_STATUS_SUCCESS)
+    {
+        need_init_decoder = false;
+        pcm_processed = pcm_data.dataLen;
+        pcm_data.dataLen = 0;
+    }
+    else
+    {
+        TRACE( "msbc decode error");
+    }
+
+exit:
+    if (pcm_processed != pcm_len)
+    {
+        TRACE( "media_msbc_decoder error~~~ %d/%d/%d %d/%d\n ", pcm_processed, pcm_len, byte_decode, ret, plc_type);
+    }
+
+    LOCK_APP_AUDIO_QUEUE();
+    APP_AUDIO_DeCQueue(&voicebtpcm_m2p_queue, 0, MSBC_FRAME_SIZE);
+    UNLOCK_APP_AUDIO_QUEUE();
+
+    return pcm_processed;
+}
+
+#else
+
+static uint16_t msbc_frame_size = MSBC_FRAME_SIZE;
+static char msbc_need_check_sync_header = 0;
 
 int decode_msbc_frame(unsigned char *pcm_buffer, unsigned int pcm_len)
 {
@@ -937,7 +1377,7 @@ exit:
     return pcm_processed;
 }
 #endif
-
+#endif
 //capture flow
 //mic-->audioflinger capture-->store_voicebtpcm_p2m_buffer-->get_voicebtpcm_p2m_frame-->bt
 //used by capture, store data from mic to memory
@@ -1261,14 +1701,14 @@ void dc_filter_2(short *in, int len, float left_gain, float right_gain)
 
         tmp1 = in[i];
         tmp1 -= State_M_2[0];
-        tmp1 = (int)((float)tmp1 * left_gain);//ÏîÈ¦¶ú»ú
+        tmp1 = (int)((float)tmp1 * left_gain);//ÃÃ®ÃˆÂ¦Â¶ÃºÂ»Ãº
         in[i] = speech_ssat_int16(tmp1);
 
         tmp1 = in[i + 1];
         tmp1 -= State_M_2[1];
-        tmp1 = (int)((float)tmp1 * right_gain);//ÏîÈ¦¶ú»ú
+        tmp1 = (int)((float)tmp1 * right_gain);//ÃÃ®ÃˆÂ¦Â¶ÃºÂ»Ãº
         in[i + 1] = speech_ssat_int16(tmp1);
-        //in[2 * i + 1] = tmp1*1.05f/2.0f;//haran Í·´÷Ê½
+        //in[2 * i + 1] = tmp1*1.05f/2.0f;//haran ÃÂ·Â´Ã·ÃŠÂ½
     }
 }
 
@@ -1437,9 +1877,8 @@ uint32_t voicebtpcm_pcm_audio_data_come(uint8_t *buf, uint32_t len)
 
     // Sample rate: 16k-->8k
 // #if 0
-#if (defined(SPEECH_TX_2MIC_NS) || defined(SPEECH_TX_2MIC_NS2))
-    if (!bt_sco_codec_is_msbc())
-    {        
+#if (defined(SPEECH_TX_2MIC_NS) || defined(SPEECH_TX_2MIC_NS2)) && !defined(MSBC_16K_SAMPLE_RATE)
+    {
 #if defined(SPEECH_TX_AEC) || defined(SPEECH_TX_AEC2) || defined(SPEECH_TX_AEC2FLOAT)
         LowPassFilter(echo_buf, echo_buf, filterState1, pcm_len);
 #endif
@@ -1456,22 +1895,10 @@ uint32_t voicebtpcm_pcm_audio_data_come(uint8_t *buf, uint32_t len)
     audio_dump_add_channel_data(2, pcm_buf, pcm_len);
 #endif
 
-#if (defined(SPEECH_TX_AEC) || defined(SPEECH_TX_NS))
-    {
 #if defined (SPEECH_TX_AEC)
-        speex_echo_cancellation(st, pcm_buf, echo_buf, e_buf);
-#else
-        e_buf = pcm_buf;
+    speex_echo_cancellation(st, pcm_buf, echo_buf, e_buf);
+    memcpy(pcm_buf, e_buf, pcm_len * sizeof(int16_t));
 #endif
-
-#if defined (SPEECH_TX_NS)
-        speex_preprocess_run(den, e_buf);
-#endif
-        pcm_buf = e_buf;
-    }
-#endif // defined( SPEECH_TX_AEC ) || defined( SPEECH_TX_NS )
-
-    audio_dump_add_channel_data(3, pcm_buf, pcm_len);
 
 #ifdef SPEECH_TX_AEC2
     bt_sco_chain_echo_suppress_sendchain(pcm_buf, echo_buf, pcm_len);
@@ -1479,10 +1906,17 @@ uint32_t voicebtpcm_pcm_audio_data_come(uint8_t *buf, uint32_t len)
 
 #ifdef SPEECH_TX_AEC2FLOAT
     //uint32_t start = hal_sys_timer_get();
-    ec_process(ec2f_st, pcm_buf, echo_buf, pcm_buf);
+    ec_process(ec2f_st, pcm_buf, echo_buf, e_buf);
+    memcpy(pcm_buf, e_buf, pcm_len * sizeof(int16_t));
     //uint32_t end = hal_sys_timer_get();
     //TRACE("ec2 float cost %d ticks", end - start);
 #endif
+
+#if defined (SPEECH_TX_NS)
+    speex_preprocess_run(den, pcm_buf);
+#endif
+
+    audio_dump_add_channel_data(3, pcm_buf, pcm_len);
 
 #ifdef SPEECH_TX_NS2
     //uint32_t start = hal_sys_timer_get();
@@ -1498,6 +1932,18 @@ uint32_t voicebtpcm_pcm_audio_data_come(uint8_t *buf, uint32_t len)
     //TRACE("ns2 cost %d ticks", end - start);
 #endif
 
+#ifdef SPEECH_TX_NS3
+    ns3_process(speech_tx_ns3_st, pcm_buf, pcm_len);
+#endif
+
+#ifdef SPEECH_TX_NOISE_GATE
+    speech_noise_gate_run(speech_tx_noisegate_st, pcm_buf, pcm_len);
+#endif
+
+#ifdef SPEECH_TX_COMPEXP
+    compexp_process(speech_tx_compexp_st, pcm_buf, pcm_len);
+#endif
+
     audio_dump_add_channel_data(4, pcm_buf, pcm_len);
 
 #if defined(SPEECH_TX_AGC)
@@ -1505,10 +1951,14 @@ uint32_t voicebtpcm_pcm_audio_data_come(uint8_t *buf, uint32_t len)
 #endif
 
 #if defined (SPEECH_TX_EQ)
-    speech_iir_process(speech_tx_eq_st, pcm_buf, pcm_len);
+    eq_process(speech_tx_eq_st, pcm_buf, pcm_len);
 #endif
 
     audio_dump_add_channel_data(5, pcm_buf, pcm_len);
+
+#if defined(SPEECH_ALGORITHMGAIN)
+    iir_run_mono_algorithmgain(SPEECH_ALGORITHMGAIN, pcm_buf, pcm_len);
+#endif
 
     // up resample: 8k/16k-->16k
 #if 0
@@ -1527,14 +1977,14 @@ uint32_t voicebtpcm_pcm_audio_data_come(uint8_t *buf, uint32_t len)
 #endif
     //END
 
-// TODO(yunjiehuo): how to deal with SPEECH_CAPTURE_TWO_CHANNEL as dual mic use 16k samplerate
-#if defined(HFP_1_6_ENABLE) && !defined(MSBC_16K_SAMPLE_RATE) && !defined(SPEECH_CAPTURE_TWO_CHANNEL)
-    iir_resample_process(upsample_st, pcm_buf, upsample_buf_for_msbc, pcm_len);
-    int16_t *encode_buf = upsample_buf_for_msbc;
-    int encode_len = pcm_len * 2;
-#else
     int16_t *encode_buf = pcm_buf;
     int encode_len = pcm_len;
+#if defined(HFP_1_6_ENABLE) && !defined(MSBC_16K_SAMPLE_RATE)
+    if (bt_sco_codec_is_msbc() == true) {
+        iir_resample_process(upsample_st, pcm_buf, upsample_buf_for_msbc, pcm_len);
+        encode_buf = upsample_buf_for_msbc;
+        encode_len = pcm_len * 2;
+    }
 #endif
 
     LOCK_APP_AUDIO_QUEUE();
@@ -1564,10 +2014,6 @@ uint32_t voicebtpcm_pcm_audio_data_come(uint8_t *buf, uint32_t len)
 
     // TRACE("[%s] pcm_len = %d", __func__, pcm_len);
 
-    audio_dump_clear_up();
-
-    audio_dump_add_channel_data(0, pcm_buf, pcm_len);
-
     LOCK_APP_AUDIO_QUEUE();
     store_voicebtpcm_p2m_buffer((uint8_t *)pcm_buf, pcm_len*2);
     size = APP_AUDIO_LengthOfCQueue(&voicebtpcm_p2m_queue);
@@ -1577,8 +2023,6 @@ uint32_t voicebtpcm_pcm_audio_data_come(uint8_t *buf, uint32_t len)
     {
         voicebtpcm_cache_p2m_status = APP_AUDIO_CACHE_OK;
     }
-
-    audio_dump_run();
 
     return pcm_len*2;
 }
@@ -1625,12 +2069,13 @@ uint32_t voicebtpcm_pcm_audio_more_data(uint8_t *buf, uint32_t len)
 #endif
 #endif
 
-#if defined(HFP_1_6_ENABLE) && !defined(MSBC_16K_SAMPLE_RATE)
-        int decode_len = len * 2;
-        uint8_t *decode_buf = (uint8_t *)downsample_buf_for_msbc;
-#else
         int decode_len = len;
         uint8_t *decode_buf = buf;
+#if defined(HFP_1_6_ENABLE) && !defined(MSBC_16K_SAMPLE_RATE)
+        if (bt_sco_codec_is_msbc() == true) {
+            decode_len = len * 2;
+            decode_buf = (uint8_t *)downsample_buf_for_msbc;
+        }
 #endif
 
         unsigned int len1 = 0, len2 = 0;
@@ -1669,7 +2114,9 @@ uint32_t voicebtpcm_pcm_audio_more_data(uint8_t *buf, uint32_t len)
 
 #if defined(HFP_1_6_ENABLE) && !defined(MSBC_16K_SAMPLE_RATE)
     // downsample_buf_for_msbc size is len * 2
-    iir_resample_process(downsample_st, downsample_buf_for_msbc, (int16_t *)buf, len);
+    if (bt_sco_codec_is_msbc() == true) {
+        iir_resample_process(downsample_st, downsample_buf_for_msbc, (int16_t *)buf, len);
+    }
 #endif
 
 #if defined ( SPEECH_RX_NS )
@@ -1694,12 +2141,16 @@ uint32_t voicebtpcm_pcm_audio_more_data(uint8_t *buf, uint32_t len)
     lc_mmse_ns_float_run(speech_rx_ns2f_st, pcm_buf);
 #endif
 
+#ifdef SPEECH_RX_NS3
+    ns3_process(speech_rx_ns3_st, pcm_buf, pcm_len);
+#endif
+
 #ifdef SPEECH_RX_AGC
     agc_process(speech_rx_agc_st, pcm_buf);
 #endif
 
 #if defined (SPEECH_RX_EQ)
-    speech_iir_process(speech_rx_eq_st, pcm_buf, pcm_len);
+    eq_process(speech_rx_eq_st, pcm_buf, pcm_len);
 #endif
 
 #ifdef SPEECH_SPK_FIR_EQ
@@ -1708,6 +2159,10 @@ uint32_t voicebtpcm_pcm_audio_more_data(uint8_t *buf, uint32_t len)
         pcm_buf[i] = (short)(pcm_buf[i] * 0.7f);
     }
     speech_fir_run(pcm_buf, pcm_len);
+#endif
+
+#if defined(SPEAKER_ALGORITHMGAIN)
+    iir_run_mono_algorithmgain(SPEAKER_ALGORITHMGAIN, pcm_buf, pcm_len);
 #endif
 
     return l;
@@ -1800,7 +2255,10 @@ int voicebtpcm_pcm_audio_init(void)
         msbc_eq_band_gain[i] = EQLevel[cfg_aud_eq_sbc_band_settings[i]+12];
     }
 
+    bt_sco_player_restart_requeset(false);
+
     msbc_input_valid = false;
+    msbc_input_offset = 0;
     need_init_encoder = 1;
     msbc_counter = 0x08;
 
@@ -1814,6 +2272,22 @@ int voicebtpcm_pcm_audio_init(void)
         app_audio_mempool_get_buff(&msbc_buf_before_decode, MSBC_FRAME_SIZE * sizeof(short));
         app_audio_mempool_get_buff(&temp_msbc_buf, MSBC_ENCODE_PCM_LEN * sizeof(short));
         app_audio_mempool_get_buff(&temp_msbc_buf1, MSBC_ENCODE_PCM_LEN * sizeof(short));
+#if defined(MSBC_PLC_ENCODER)
+        app_audio_mempool_get_buff((uint8_t **)&msbc_plc_encoder_buffer, MSBC_PLC_ENCODER_SIZE);
+        app_audio_mempool_get_buff((uint8_t **)&msbc_plc_encoder_data, sizeof(SbcPcmData));
+        app_audio_mempool_get_buff((uint8_t **)&msbc_plc_output_pcmbuffer, (MSBC_PLC_ENCODER_BUFFER_SIZE-MSBC_PLC_ENCODER_BUFFER_OFFSET)*sizeof(short));
+        app_audio_mempool_get_buff((uint8_t **)&msbc_plc_encoder_inbuffer, MSBC_PLC_ENCODER_BUFFER_SIZE*sizeof(short));
+        app_audio_mempool_get_buff((uint8_t **)&msbc_plc_encoder, sizeof(SbcEncoder));
+        SBC_InitEncoder(msbc_plc_encoder);
+        msbc_plc_encoder->streamInfo.mSbcFlag = 1;
+        msbc_plc_encoder->streamInfo.numChannels = 1;
+        msbc_plc_encoder->streamInfo.channelMode = SBC_CHNL_MODE_MONO;
+        msbc_plc_encoder->streamInfo.bitPool     = 26;
+        msbc_plc_encoder->streamInfo.sampleFreq  = SBC_CHNL_SAMPLE_FREQ_16;
+        msbc_plc_encoder->streamInfo.allocMethod = SBC_ALLOC_METHOD_LOUDNESS;
+        msbc_plc_encoder->streamInfo.numBlocks   = MSBC_BLOCKS;
+        msbc_plc_encoder->streamInfo.numSubBands = 8;
+#endif
     }
 #endif
 
@@ -1826,11 +2300,11 @@ int voicebtpcm_pcm_audio_init(void)
     TRACE("[%s] aec_frame_len = %d", __func__, aec_frame_len);
 
     echo_buf = (short *)voicebtpcm_get_ext_buff(aec_frame_len * sizeof(short));
+    e_buf = (short *)voicebtpcm_get_ext_buff(aec_frame_len * sizeof(short));
 #endif
 
 #if defined( SPEECH_TX_AEC )
         int delay = 60;
-        e_buf = (short *)voicebtpcm_get_ext_buff(aec_frame_len * sizeof(short));
         st = speex_echo_state_init(tx_frame_length, tx_frame_length, delay, voicebtpcm_get_ext_buff);
         speex_echo_ctl(st, SPEEX_ECHO_SET_SAMPLING_RATE, &tx_sample_rate);
 
@@ -1927,7 +2401,7 @@ int voicebtpcm_pcm_audio_init(void)
 #endif
 
 #if defined(SPEECH_TX_NS2)
-    speech_tx_ns2_st = lc_mmse_ns_init(tx_frame_length, tx_sample_rate, -15);
+    speech_tx_ns2_st = lc_mmse_ns_init(tx_sample_rate, tx_frame_length, -15);
 #if defined(SPEECH_TX_AEC) && !defined(SPEECH_TX_NS)
     lc_mmse_ns_set_echo_state(speech_tx_ns2_st, st);
     lc_mmse_ns_set_echo_suppress(speech_tx_ns2_st, -40);
@@ -1935,11 +2409,23 @@ int voicebtpcm_pcm_audio_init(void)
 #endif
 
 #if defined(SPEECH_TX_NS2FLOAT)
-    speech_tx_ns2f_st = lc_mmse_ns_float_init(tx_frame_length, tx_sample_rate, -15);
+    speech_tx_ns2f_st = lc_mmse_ns_float_init(tx_sample_rate, tx_frame_length, -15);
 #if defined(SPEECH_TX_AEC) && !defined(SPEECH_TX_NS)
     lc_mmse_ns_float_set_echo_state(speech_tx_ns2f_st, st);
     lc_mmse_ns_float_set_echo_suppress(speech_tx_ns2f_st, -40);
 #endif
+#endif
+
+#if defined(SPEECH_TX_NS3)
+    speech_tx_ns3_st = ns3_init(tx_sample_rate, tx_frame_length, &speech_tx_ns3_cfg);
+#endif
+
+#if defined(SPEECH_TX_NOISE_GATE)
+    speech_tx_noisegate_st = speech_noise_gate_init(tx_sample_rate, tx_frame_length, &speech_tx_noisegate_cfg);
+#endif
+
+#if defined(SPEECH_TX_COMPEXP)
+    speech_tx_compexp_st = compexp_init(tx_sample_rate, &speech_tx_compexp_cfg);
 #endif
 
 #ifdef SPEECH_TX_2MIC_NS
@@ -1962,23 +2448,10 @@ int voicebtpcm_pcm_audio_init(void)
 #endif
 
 #if defined(SPEECH_TX_EQ)
-    SPEECH_IIR_CFG_T speech_tx_eq_cfg;
     if (tx_sample_rate == 8000)
-    {
-        speech_tx_eq_cfg.numStages = ARRAY_SIZE(speech_tx_eq_8k_pCoeffs);
-        speech_tx_eq_cfg.pCoeffs = speech_tx_eq_8k_pCoeffs;
-    }
-    else if (tx_sample_rate == 16000)
-    {
-        speech_tx_eq_cfg.numStages = ARRAY_SIZE(speech_tx_eq_16k_pCoeffs);
-        speech_tx_eq_cfg.pCoeffs = speech_tx_eq_16k_pCoeffs;        
-    }
+        speech_tx_eq_st = eq_init_raw(tx_sample_rate, tx_frame_length, &speech_tx_eq_cfg_8k);
     else
-    {
-        ASSERT(0, "[%s] SPEECH_TX_EQ: tx_sample_rate(%d) is invalid", __func__, tx_sample_rate);
-    }
-
-    speech_tx_eq_st = speech_iir_create(&speech_tx_eq_cfg);
+        speech_tx_eq_st = eq_init_raw(tx_sample_rate, tx_frame_length, &speech_tx_eq_cfg_16k);
 #endif
 
 #if defined(SPEECH_RX_PLC)
@@ -1999,11 +2472,15 @@ int voicebtpcm_pcm_audio_init(void)
 #endif
 
 #ifdef SPEECH_RX_NS2
-    speech_rx_ns2_st = lc_mmse_ns_init(rx_frame_length, rx_sample_rate, 0);
+    speech_rx_ns2_st = lc_mmse_ns_init(rx_sample_rate, rx_frame_length, 0);
 #endif
 
 #ifdef SPEECH_RX_NS2FLOAT
-    speech_rx_ns2f_st = lc_mmse_ns_float_init(rx_frame_length, rx_sample_rate, 0);
+    speech_rx_ns2f_st = lc_mmse_ns_float_init(rx_sample_rate, rx_frame_length, 0);
+#endif
+
+#ifdef SPEECH_RX_NS3
+    speech_rx_ns3_st = ns3_init(rx_sample_rate, rx_frame_length, &speech_rx_ns3_cfg);
 #endif
 
 #ifdef SPEECH_RX_AGC
@@ -2012,33 +2489,17 @@ int voicebtpcm_pcm_audio_init(void)
 #endif
 
 #if defined(SPEECH_RX_EQ)
-    SPEECH_IIR_CFG_T speech_rx_eq_cfg;
-    if (tx_sample_rate == 8000)
-    {
-        speech_rx_eq_cfg.numStages = ARRAY_SIZE(speech_rx_eq_8k_pCoeffs);
-        speech_rx_eq_cfg.pCoeffs = speech_rx_eq_8k_pCoeffs;
-    }
-    else if (tx_sample_rate == 16000)
-    {
-        speech_rx_eq_cfg.numStages = ARRAY_SIZE(speech_rx_eq_16k_pCoeffs);
-        speech_rx_eq_cfg.pCoeffs = speech_rx_eq_16k_pCoeffs;        
-    }
-    else
-    {
-        ASSERT(0, "[%s] SPEECH_RX_EQ: rx_sample_rate(%d) is invalid", __func__, rx_sample_rate);
-    }
-
-    speech_rx_eq_st = speech_iir_create(&speech_rx_eq_cfg);
+    speech_rx_eq_st = eq_init(rx_sample_rate, rx_frame_length, &speech_rx_eq_cfg);
 #endif
 
 #if defined(HFP_1_6_ENABLE) && !defined(MSBC_16K_SAMPLE_RATE)
     upsample_buf_for_msbc = (int16_t *)voicebtpcm_get_ext_buff(sizeof(int16_t) * tx_frame_length * 2);
     downsample_buf_for_msbc = (int16_t *)voicebtpcm_get_ext_buff(sizeof(int16_t) * tx_frame_length * 2);
-    upsample_st = iir_resample_init(IIR_RESAMPLE_MODE_1TO2);
-    downsample_st = iir_resample_init(IIR_RESAMPLE_MODE_2TO1);
+    upsample_st = iir_resample_init(tx_frame_length, IIR_RESAMPLE_MODE_1TO2);
+    downsample_st = iir_resample_init(rx_frame_length * 2, IIR_RESAMPLE_MODE_2TO1);
 #endif
 
-    audio_dump_init(tx_frame_length, 1);
+    audio_dump_init(tx_frame_length, 2);
 
     return 0;
 }
@@ -2049,21 +2510,19 @@ int voicebtpcm_pcm_audio_deinit(void)
     // TRACE("[%s] app audio buffer free = %d", __func__, app_audio_mempool_free_buff_size());
 
 #if defined(SPEECH_RX_EQ)
-    speech_iir_dump(speech_rx_eq_st);
-    speech_iir_destory(speech_rx_eq_st);
+    eq_destroy(speech_rx_eq_st);
 #endif
 
 #if defined(SPEECH_TX_EQ)
-    speech_iir_dump(speech_tx_eq_st);
-    speech_iir_destory(speech_tx_eq_st);
+    eq_destroy(speech_tx_eq_st);
 #endif
 
 #ifdef SPEECH_TX_AGC
-    agc_state_destory(speech_tx_agc_st);
+    agc_state_destroy(speech_tx_agc_st);
 #endif
 
 #ifdef SPEECH_RX_AGC
-    agc_state_destory(speech_rx_agc_st);
+    agc_state_destroy(speech_rx_agc_st);
 #endif
 
 #ifdef SPEECH_TX_2MIC_NS3
@@ -2092,6 +2551,22 @@ int voicebtpcm_pcm_audio_deinit(void)
 
 #ifdef SPEECH_RX_NS2FLOAT
     lc_mmse_ns_float_deinit(speech_rx_ns2f_st);
+#endif
+
+#ifdef SPEECH_TX_NS3
+    ns3_destroy(speech_tx_ns3_st);
+#endif
+
+#ifdef SPEECH_RX_NS3
+    ns3_destroy(speech_rx_ns3_st);
+#endif
+
+#ifdef SPEECH_TX_NOISE_GATE
+    speech_noise_gate_deinit(speech_tx_noisegate_st);
+#endif
+
+#ifdef SPEECH_TX_COMPEXP
+    compexp_destroy(speech_tx_compexp_st);
 #endif
 
 #ifdef SPEECH_TX_AEC2

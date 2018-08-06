@@ -26,9 +26,9 @@ ccflags-y := \
 	-Iservices/multimedia/rbcodec \
 	-Iplatform/drivers/uarthci \
 	-Iutils/cqueue \
+	-Iservices/audio_dump/include \
 	-Iservices/multimedia/speech/codec/codecs \
 	-Iservices/multimedia/speech/process \
-	-Iservices/multimedia/audio_dump/include \
 	-Iservices/multimedia/speech/process/common/include \
 	-Iservices/multimedia/speech/process/speech_iir/include \
 	-Iservices/multimedia/speech/process/ns_and_ec/include \
@@ -40,6 +40,10 @@ ccflags-y := \
 	-Iservices/multimedia/speech/process/plc/include \
 	-Iservices/multimedia/speech/process/ec2_float/include \
 	-Iservices/multimedia/speech/process/iir_resample/include \
+	-Iservices/multimedia/speech/process/speech_eq/include \
+	-Iservices/multimedia/speech/process/ns3/include \
+	-Iservices/multimedia/speech/process/speech_noise_gate/include \
+	-Iservices/multimedia/speech/process/compexp/include \
 	-Iservices/multimedia/speech/application/Pcm8kCvsd/include \
 	-Iservices/multimedia/rbcodec \
 	-Iservices/multimedia/rbcodec/codecs \
