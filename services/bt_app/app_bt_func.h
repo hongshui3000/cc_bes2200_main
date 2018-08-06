@@ -44,6 +44,7 @@ typedef enum _bt_fn_req {
         A2DP_Reort_Gain = 26,
         SPP_write = 27,
         SPP_send_rsp = 28,
+        DIP_QuryService_req                         = 29,
         
 
 }bt_fn_req;
@@ -207,7 +208,9 @@ typedef union _bt_fn_param {
         uint8_t *dataptr;
         uint32_t datalen;
     } SPP_WRITE_param;
-    
+    struct {
+        BtRemoteDevice* remDev;
+    } DIP_QuryService_param;
 } bt_fn_param;
 
 typedef struct {

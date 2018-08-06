@@ -118,15 +118,31 @@ static uint32_t app_ring_merge_periodic_more_data(uint8_t *buf, uint32_t len)
 uint32_t app_ring_merge_more_data(uint8_t *buf, uint32_t len)
 {
     uint32_t nRet = len;
-
+#ifndef RING_MERGE_POST_HANDLE
     osMutexWait(app_ring_merge_mutex_id, osWaitForever);
     if (app_ring_merge_config.handler && app_ring_merge_config.running){
         nRet = app_ring_merge_config.handler(buf, len);        
     }
     osMutexRelease(app_ring_merge_mutex_id);
-
+#endif
     return nRet;
 }
+
+#ifdef RING_MERGE_POST_HANDLE
+extern 
+"C"
+uint32_t app_post_ring_merge_more_data(uint8_t *buf, uint32_t len)
+{
+    uint32_t nRet = len;
+    osMutexWait(app_ring_merge_mutex_id, osWaitForever);
+    if (app_ring_merge_config.handler && app_ring_merge_config.running){
+        nRet = app_ring_merge_config.handler(buf, len);        
+    }
+    osMutexRelease(app_ring_merge_mutex_id);
+    return nRet;
+}
+#endif
+
 
 int app_ring_merge_setup(int16_t *buf, uint32_t len, enum APP_RING_MERGE_PLAY_T play)
 {

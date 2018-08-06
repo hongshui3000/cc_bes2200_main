@@ -253,6 +253,15 @@ void tws_ctrl_thread(const void *arg)
                     app_bt_SPP_Write_Cmd(TWS_SPP_CMD_VOICE_REPORT, msg_p->arg, NULL, 0);
                 }
                 break;
+            case TWS_CTRL_RING_SYNC:
+                TRACE("TWS_CTRL_RING_SYNC\n");
+#ifdef TWS_RING_SYNC
+                if(tws.tws_mode == TWSMASTER){
+                    app_bt_SPP_Write_Cmd(TWS_SPP_CMD_RING_SYNC,msg_p->arg,NULL,0);
+                }
+#endif
+                break;
+
             default:
                 break;
         }
@@ -446,5 +455,18 @@ int tws_slave_voice_report(APP_STATUS_INDICATION_T id)
     tws_ctrl_mailbox_put(&msg);
     return 0;
 }
+
+#ifdef TWS_RING_SYNC
+int tws_player_ring_sync(U16 hf_event)
+{
+    TWS_MSG_BLOCK msg;
+    msg.arg = hf_event;
+    msg.evt = TWS_CTRL_RING_SYNC;
+    //becase tws_audio_sendrequest will block the evmprocess
+    //had better to create a new thread to avoid fall into a dead trap;
+    tws_ctrl_mailbox_put(&msg);
+    return 0;
+}
+#endif
 
 #endif

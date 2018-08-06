@@ -13,23 +13,23 @@
 #define TWS_SPP_CMD_SET_TWSPLAYER_RESTART  (0x102)
 #define TWS_SPP_CMD_NOTIFY_KEY  (0x103)
 #define TWS_SPP_CMD_SET_A2DP_VOLUME  (0x104)
-
+#define TWS_SPP_CMD_RING_SYNC  (0x105)
 //@20180304 by parker.wei 
 #ifdef _PROJ_2000IZ_C003__
-#define TWS_SPP_CMD_UPDATE_PEER_STATE (0X105)// by parker.wei NOTIFY THE SLAVE ABOUT THE AG state
+#define TWS_SPP_CMD_UPDATE_PEER_STATE (0X110)// by parker.wei NOTIFY THE SLAVE ABOUT THE AG state
 #endif
 //Modified by ATX : parker.wei_20180306
-#define TWS_SPP_CMD_HFP_VOLUME_CHANGE  (0x106)
-#define TWS_SPP_CMD_A2DP_VOLUME_CHANGE  (0x107)
+#define TWS_SPP_CMD_HFP_VOLUME_CHANGE  (0X111)
+#define TWS_SPP_CMD_A2DP_VOLUME_CHANGE  (0X112)
 
 #ifdef _MASTER_CTRL_SLAVE_ENTER_OTA__ //Modified by ATX : Parke.Wei_20180413
-#define TWS_SPP_CMD_SLAVE_ENTER_CMD (0X108)//
+#define TWS_SPP_CMD_SLAVE_ENTER_CMD (0X113)//
 #endif
 
 //Modified by ATX : Haorong.Wu_20180507
-#define TWS_SPP_CMD_VOICE_REPORT  (0x109)
+#define TWS_SPP_CMD_VOICE_REPORT  (0X114)
 
-#define TWS_SPP_CMD_SET_SYSTEM_VOL (0X110)//
+#define TWS_SPP_CMD_SET_SYSTEM_VOL (0X115)//
 
 
    
@@ -93,6 +93,11 @@ typedef struct __TWS_SPP_CMD_RSP{
     uint16_t cmd_id;
     int8_t status;
 } __attribute__((packed)) TWS_SPP_CMD_RSP;
+
+typedef struct _TWS_SPP_SET_RING_SYNC{
+    uint16_t cmd_id;
+    U16 hf_event;
+}__attribute__((packed)) TWS_SPP_SET_RING_SYNC;
 
 void tws_create_spp_client(A2dpStream *Stream);
 void tws_create_spp_server(A2dpStream *Stream);

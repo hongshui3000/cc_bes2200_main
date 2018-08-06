@@ -7,6 +7,7 @@
 
 #include "app_tws_spp.h"
 #include "btapp.h"
+#include "app_dip.h"
 
 extern "C" void OS_NotifyEvm(void);
 
@@ -146,6 +147,11 @@ inline int app_bt_mail_process(APP_BT_MAIL* mail_p)
             tws_spp_send_rsp((uint8_t *)&rsp,sizeof(rsp));
 
             break;
+#if DIP_DEVICE ==XA_ENABLED
+        case DIP_QuryService_req:
+            status = app_handle_dipinfo(mail_p->param.DIP_QuryService_param.remDev);
+            break;   
+#endif
             
     }
     
@@ -586,4 +592,18 @@ int app_bt_SPP_Write_Rsp(uint16_t id,uint32_t param)
     
     return 0;
 }
+
+
+int app_bt_dip_QuryService(BtRemoteDevice* rem)
+{
+    APP_BT_MAIL* mail;
+    app_bt_mail_alloc(&mail);
+    mail->src_thread = (uint32_t)osThreadGetId();
+    mail->request_id = DIP_QuryService_req;
+    mail->param.DIP_QuryService_param.remDev = rem;      
+    app_bt_mail_send(mail);
+    return 0;
+}
+
+
 

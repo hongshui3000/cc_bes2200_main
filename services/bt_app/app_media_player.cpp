@@ -43,6 +43,8 @@ extern "C" {
 #include "btapp.h"
 #include "app_bt_media_manager.h"
 
+#include "app_tws.h"
+
 static char need_init_decoder = 1;
 static SbcDecoder *media_sbc_decoder = NULL;
 
@@ -741,6 +743,17 @@ int app_play_audio_onoff(bool onoff, APP_AUDIO_STATUS* status)
 #endif
         af_stream_open(AUD_STREAM_ID_0, AUD_STREAM_PLAYBACK, &stream_cfg);
         af_stream_start(AUD_STREAM_ID_0, AUD_STREAM_PLAYBACK);
+
+#ifdef TWS_RING_SYNC
+        TRACE("status->id:%d, aud_id:%d\n",status->id,status->aud_id);
+        if((status->id == APP_PLAY_BACK_AUDIO)&&(status->aud_id == AUD_ID_BT_CALL_INCOMING_CALL)){
+            uint32_t trig_ticks = 0;
+            trig_ticks = tws_media_play_calc_ring_sync_trigger_time();
+            TRACE("trig_ticks:%d\n",trig_ticks);
+
+            app_tws_set_trigger_time(trig_ticks);
+        }
+#endif
 
     } else {
         af_stream_stop(AUD_STREAM_ID_0, AUD_STREAM_PLAYBACK);

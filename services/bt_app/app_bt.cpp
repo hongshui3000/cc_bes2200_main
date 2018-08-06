@@ -479,6 +479,10 @@ static void app_bt_earphone_role_process(const BtEvent *Event)
 #ifdef __TWS_CALL_DUAL_CHANNEL__
 extern uint8_t bt_addr[6];
 #endif
+
+#if DIP_DEVICE ==XA_ENABLED
+extern int app_bt_dip_QuryService(BtRemoteDevice* rem);
+#endif
 static uint8_t peer_device_connecting_mobile=0;
 
 static void app_bt_golbal_handle(const BtEvent *Event)
@@ -625,9 +629,7 @@ static void app_bt_golbal_handle(const BtEvent *Event)
 #ifdef __TWS__
         case BTEVENT_LINK_CONNECT_IND:
 #if (DIP_DEVICE==XA_ENABLED)           
-            //DIP_test_remDev = Event->p.remDev;
-            DipGetRemotePnpInfo(Event->p.remDev);
-
+            app_bt_dip_QuryService(Event->p.remDev);
 #endif    
 			BtAccessibleMode mode;
 			struct nvrecord_env_t *nvrecord_env;
@@ -654,8 +656,7 @@ static void app_bt_golbal_handle(const BtEvent *Event)
         case BTEVENT_LINK_CONNECT_CNF:
 #if DIP_DEVICE ==XA_ENABLED
             //DIP_test_remDev = Event->p.remDev;
-            DipGetRemotePnpInfo(Event->p.remDev);
-            
+            app_bt_dip_QuryService(Event->p.remDev);            
 #endif    
             TRACE("%s BTEVENT_LINK_CONNECT_CNF errCode:0x%x role:%d",__func__, Event->errCode, Event->p.remDev->role);
             nv_record_env_get(&nvrecord_env);
@@ -989,16 +990,17 @@ static void set_a2dp_to_aac_limited(void)
 		return;
 	A2DP_Deregister(&app_bt_device.a2dp_aac_stream);
 	a2dp_aac_avdtpcodec.elements = (U8*) (&a2dp_codec_aac_elements_limited);
-#ifdef __A2DP_AVDTP_CP__
-                    a2dp_avdtpCp[0].cpType = AVDTP_CP_TYPE_SCMS_T;
-                    a2dp_avdtpCp[0].data = (U8 *)&a2dp_avdtpCp_securityData;
-                    a2dp_avdtpCp[0].dataLen = 1;
-                    A2DP_Register(&app_bt_device.a2dp_aac_stream, &a2dp_aac_avdtpcodec, &a2dp_avdtpCp[0], a2dp_callback);
-                    A2DP_AddContentProtection(&app_bt_device.a2dp_aac_stream, &a2dp_avdtpCp[0]);
-#else
-                    A2DP_Register(&app_bt_device.a2dp_aac_stream, &a2dp_aac_avdtpcodec, NULL, a2dp_callback);
 
-#endif       
+#ifdef __A2DP_AVDTP_CP__
+    a2dp_avdtpCp[0].cpType = AVDTP_CP_TYPE_SCMS_T;
+    a2dp_avdtpCp[0].data = (U8 *)&a2dp_avdtpCp_securityData;
+    a2dp_avdtpCp[0].dataLen = 1;
+    A2DP_Register(&app_bt_device.a2dp_aac_stream, &a2dp_aac_avdtpcodec, &a2dp_avdtpCp[0], a2dp_callback);
+    A2DP_AddContentProtection(&app_bt_device.a2dp_aac_stream, &a2dp_avdtpCp[0]);
+#else
+	A2DP_Register(&app_bt_device.a2dp_aac_stream, &a2dp_aac_avdtpcodec, NULL, a2dp_callback);
+#endif
+
 }
 
 //Modified by ATX : Leon.He_20180625: add app_acc_limited flag

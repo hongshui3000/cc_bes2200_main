@@ -501,6 +501,7 @@ typedef enum {
     TWS_CTRL_PLAYER_UPDATE_PEER_STATE,//Modified by ATX : Parke.Wei_20180316
     TWS_MASTER_CTRL_SLAVE_ENTER_OTA,//Modified by ATX : Parke.Wei_20180413
     TWS_CTRL_PLAYER_SEND_RSP,
+	TWS_CTRL_RING_SYNC,
     TWS_CTRL_PLAYER_SET_SYSTEM_VOLUME,
 //Modified by ATX : Haorong.Wu_20180507
     TWS_CTRL_VOICE_REPORT,
@@ -710,6 +711,11 @@ int tws_player_spp_connected( unsigned char para);
 #ifdef A2DP_AAC_DIRECT_TRANSFER
 uint8_t app_tws_get_codec_type(void);
 void tws_set_mobile_sink_stream(A2dpStream *stream);
+#endif
+
+#ifdef TWS_RING_SYNC
+int tws_player_ring_sync(U16 hf_event);
+uint32_t tws_media_play_calc_ring_sync_trigger_time(void);
 #endif
 
 void app_tws_check_pcm_signal(void);

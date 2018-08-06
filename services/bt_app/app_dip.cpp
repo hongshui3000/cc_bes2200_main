@@ -1068,15 +1068,24 @@ void IapQueryForService(BtRemoteDevice *btDevice)
     return;
 }
 
+
+BtStatus app_handle_dipinfo(BtRemoteDevice *btDevice)
+{
+    BtRemoteDevice * RmWarring = btDevice;
+    TRACE("app_handle_dipinfo");
+    BtStatus temp =DipQueryForService(&Dipdev,btDevice,&PNP_info);
+    //osDelay(200);
+     IapQueryForService(btDevice);
+    return temp;
+}
+
 void DipGetRemotePnpInfo(BtRemoteDevice *btDevice)
 {
     BtRemoteDevice * RmWarring = btDevice;
 #if DIP_DEVICE ==XA_ENABLED
-
-    DipQueryForService(&Dipdev,btDevice,&PNP_info);
+    BtStatus temp =DipQueryForService(&Dipdev,btDevice,&PNP_info);
     //osDelay(200);
-
-     IapQueryForService(btDevice);
+    IapQueryForService(btDevice);
 #endif
     return;
 }

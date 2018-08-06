@@ -2,6 +2,7 @@
 #include "iir_process.h"
 #include "fir_process.h"
 #include "hw_codec_iir_process.h"
+#include "coherent_denoise.h"
 
 const struct HAL_IOMUX_PIN_FUNCTION_MAP cfg_hw_pinmux_pwl[CFG_HW_PLW_NUM] = {
 #ifdef __HW_PWM_CONTROL_LED__
@@ -150,4 +151,13 @@ const FIR_CFG_T speech_spk_eq_8k_cfg = {
     .coef = {
         26233,-11516,-8568,-5989,-3854,-2175,-924,-47,520,841,979,990,917,796,655,512,379,263,168,93,38,-1,-25,-39,-45,-45,-41,-36,-29,-23,-17,-12,-7,-4,-2,0,1,2,2,2,2,2,1,1,
     }
+};
+
+const COHERENT_DENOISE_CFG_T coherent_denoise_cfg =
+{
+    .left_gain              = 1.0f,
+    .right_gain             = 1.0f,
+    .delaytaps              = 0, 
+    .freq_smooth_enable     = 1,
+    .low_quality_enable     = 0, 
 };

@@ -368,6 +368,16 @@ void tws_spp_parse_cmd(uint8_t* cmd, uint8_t len)
 		}
 		break; 
 #endif
+        case TWS_SPP_CMD_RING_SYNC:
+        {
+            TWS_SPP_SET_RING_SYNC ring_sync;
+            memcpy(&ring_sync, cmd, sizeof(ring_sync));
+            TRACE("TWS_SPP_CMD_RING_SYNC ring_sync.hf_event:%d\n", ring_sync.hf_event);
+            if(ring_sync.hf_event == HF_EVENT_RING_IND){
+                app_voice_report(APP_STATUS_INDICATION_INCOMINGCALL,0);
+            }
+        }
+        break;
 
 
 
@@ -738,6 +748,18 @@ void tws_spp_set_a2dp_vol(uint8_t vol)
     tws_spp_send_cmd((uint8_t *)&set_tws_a2dp_volume, sizeof(set_tws_a2dp_volume));
 }
 
+#ifdef TWS_RING_SYNC
+void tws_spp_ring_sync(U16 hf_event)
+{
+    TWS_SPP_SET_RING_SYNC tws_ring_sync;
+    TRACE("tws_spp_ring_sync  hf_event=%d",hf_event);
+    tws_ring_sync.cmd_id = TWS_SPP_CMD_RING_SYNC;
+    tws_ring_sync.hf_event = hf_event;
+
+    tws_spp_send_cmd((uint8_t *)&tws_ring_sync, sizeof(tws_ring_sync));
+}
+#endif
+
 //Modified by ATX : parker.wei_20180306
 void tws_spp_a2dp_vol_change(uint8_t vol)
 {
@@ -811,6 +833,11 @@ void  btapp_process_spp_write(uint16_t cmdid,uint32_t param,uint8_t *ptr,uint32_
         case TWS_SPP_CMD_SET_A2DP_VOLUME:
             tws_spp_set_a2dp_vol(param);
             break;
+#ifdef TWS_RING_SYNC
+        case TWS_SPP_CMD_RING_SYNC:
+            tws_spp_ring_sync(param);
+            break;
+#endif
 		case TWS_SPP_CMD_SET_SYSTEM_VOL:
 			tws_spp_set_system_vol(param);
 			break;

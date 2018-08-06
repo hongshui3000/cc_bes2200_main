@@ -629,9 +629,7 @@ void hfp_callback(HfChannel *Chan, HfCallbackParms *Info)
 #if (HF_CUSTOM_FEATURE_SUPPORT & HF_CUSTOM_FEATURE_BATTERY_REPORT) || ((HF_SDK_FEATURES & HF_FEATURE_HF_INDICATORS))
         app_hfp_battery_report_reset(chan_id_flag.id);
 #endif
-#ifndef __VOLUME_RESET_WHEN_REBOOT__
         app_bt_stream_volume_ptr_update((uint8_t *)Info->p.remDev->bdAddr.addr);
-#endif
 //        app_bt_stream_hfpvolume_reset();
         app_hfp_hfcommand_mempool_calloc(&hf_cmd_p);
         if (hf_cmd_p){
@@ -730,9 +728,7 @@ void hfp_callback(HfChannel *Chan, HfCallbackParms *Info)
             app_bt_stream_volume_ptr_update(NULL);
         }
 #else
-#ifndef __VOLUME_RESET_WHEN_REBOOT__
         app_bt_stream_volume_ptr_update(NULL);
-#endif
 #endif
         app_bt_profile_connect_manager_hf(chan_id_flag.id, Chan, Info);
         for (uint8_t i=0; i<BT_DEVICE_NUM; i++){
@@ -995,8 +991,14 @@ void hfp_callback(HfChannel *Chan, HfCallbackParms *Info)
     case HF_EVENT_RING_IND:
         TRACE("::HF_EVENT_RING_IND  chan_id:%d\n", chan_id_flag.id);
 #if !defined(FPGA) && defined(__EARPHONE__)
-        if(app_bt_device.hf_audio_state[chan_id_flag.id] != HF_AUDIO_CON)
+        if(app_bt_device.hf_audio_state[chan_id_flag.id] != HF_AUDIO_CON){
+#if defined(TWS_RING_SYNC) && defined(__TWS__)
+            tws_player_ring_sync(Info->event);
             hfp_app_status_indication(chan_id_flag.id,Info);
+#else
+            hfp_app_status_indication(chan_id_flag.id,Info);
+#endif
+        }
 #endif
         break;
     case HF_EVENT_SPEAKER_VOLUME:

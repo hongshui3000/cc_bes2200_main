@@ -312,7 +312,9 @@ int besmain(void)
 #endif 
     avdtp_get_aacenable_callback = avdtp_Get_aacEnable_Flag;
 #endif
-    TRACE("a2dp_aac_stream = 0x%x \n", &app_bt_device.a2dp_aac_stream);
+    //TRACE("##@a2dp_aac_stream = 0x%x \n", &app_bt_device.a2dp_aac_stream.stream);
+    //TRACE("##@AACa2dp_stream cp= 0x%x  %x \n", app_bt_device.a2dp_aac_stream.stream.cpList.Flink,app_bt_device.a2dp_aac_stream.stream.cpList.Blink);
+    //TRACE("##@&AACa2dp_stream cp= 0x%x  %x \n", &app_bt_device.a2dp_aac_stream.stream.cpList.Flink,&app_bt_device.a2dp_aac_stream.stream.cpList.Blink);
 #endif
 
     for(uint8_t i=0;i<BT_DEVICE_NUM;i++)

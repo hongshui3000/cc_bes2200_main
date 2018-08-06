@@ -1385,9 +1385,8 @@ if (tws_a2dp_callback(Stream, Info))
    
             }
 #endif
-#ifndef __VOLUME_RESET_WHEN_REBOOT__
             app_bt_stream_volume_ptr_update((uint8_t *)Stream->stream.conn.remDev->bdAddr.addr);
-#endif
+
 #ifdef __TWS__
             if(app_tws_get_mode() == TWSMASTER)
             {

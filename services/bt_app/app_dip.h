@@ -116,6 +116,11 @@ extern BtDipContext dipContext;
 
 void app_DIP_init(DipCallBack cb);
 void DipGetRemotePnpInfo(BtRemoteDevice *btDevice);
+BtStatus app_handle_dipinfo(BtRemoteDevice *btDevice);
+
+void app_handle_dipinfo();
+
+
 #endif
 
 #endif

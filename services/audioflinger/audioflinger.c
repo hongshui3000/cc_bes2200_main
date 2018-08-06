@@ -827,6 +827,11 @@ static inline bool af_codec_playback_pre_handler(uint8_t *buf, const struct af_s
     return false;
 }
 
+#ifdef RING_MERGE_POST_HANDLE
+uint32_t app_post_ring_merge_more_data(uint8_t *buf, uint32_t len);
+uint8_t is_sbc_mode();
+uint8_t is_sco_mode();
+#endif
 static inline void af_codec_playback_post_handler(uint8_t *buf, const struct af_stream_cfg_t *role)
 {
 #if !defined(AUDIO_OUTPUT_SW_GAIN) && defined(AUDIO_OUTPUT_SMALL_GAIN_ATTN)
@@ -836,6 +841,11 @@ static inline void af_codec_playback_post_handler(uint8_t *buf, const struct af_
 #endif
 
     af_codec_post_data_loop(buf, role->dma_buf_size / 2, role->cfg.bits, role->cfg.channel_num);
+
+#ifdef RING_MERGE_POST_HANDLE
+    if(is_sbc_mode() || is_sco_mode())
+        app_post_ring_merge_more_data(buf,role->dma_buf_size / 2);
+#endif
 
 #if defined(CHIP_BEST1000) && defined(AUDIO_OUTPUT_GAIN_M60DB_CHECK)
     hal_codec_dac_gain_m60db_check(HAL_CODEC_PERF_TEST_M60DB);
