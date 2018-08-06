@@ -1904,6 +1904,9 @@ static bool check_aac_flag_legacy_condition(AvdtpStream *strm)
 
 bool avdtp_Get_aacEnable_Flag( BtRemoteDevice* remDev, AvdtpStream *strm)
 {
+#ifdef __FORCE_ENABLE_AAC__
+        return TRUE;
+#else
 #if defined(A2DP_AAC_ON)
 	if(true == check_aac_flag_for_samsung_phone())
 		return true;
@@ -1922,6 +1925,6 @@ bool avdtp_Get_aacEnable_Flag( BtRemoteDevice* remDev, AvdtpStream *strm)
     return TRUE;
 #endif
 
-    
+#endif
 }
 
