@@ -1,0 +1,176 @@
+cur_dir := $(dir $(lastword $(MAKEFILE_LIST)))
+
+obj-y := $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)*.c $(cur_dir)*.S))
+obj-y := $(obj-y:.c=.o)
+obj-y := $(obj-y:.S=.o)
+
+obj-y += $(CHIP)/
+
+subdir-ccflags-y += -Iplatform/drivers/ana
+
+# PMU settings
+export PMU_CFG_FLAGS :=
+
+# ANALOG settings
+export ANA_CFG_FLAGS :=
+
+# USBPHY settings
+export USBPHY_CFG_FLAGS :=
+
+ifeq ($(PMU_INIT),1)
+PMU_CFG_FLAGS += -DPMU_INIT
+endif
+
+ifeq ($(NO_SLEEP),1)
+PMU_CFG_FLAGS += -DNO_SLEEP
+endif
+
+ifeq ($(MCU_HIGH_PERFORMANCE_MODE),1)
+PMU_CFG_FLAGS += -DMCU_HIGH_PERFORMANCE_MODE
+endif
+
+ifneq ($(CHIP),best1000)
+VCRYSTAL_OFF ?= 1
+endif
+ifeq ($(VCRYSTAL_OFF),1)
+PMU_CFG_FLAGS += -DVCRYSTAL_OFF
+endif
+
+ifeq ($(VMEM_ON),1)
+PMU_CFG_FLAGS += -DVMEM_ON
+endif
+
+ifeq ($(VUSB_ON),1)
+PMU_CFG_FLAGS += -DVUSB_ON
+endif
+
+ifneq ($(filter-out 1.5V 1.6V 1.8V 2.5V,$(VCODEC_VOLT)),)
+$(error Invalid VCODEC_VOLT=$(VCODEC_VOLT))
+endif
+ifneq ($(VCODEC_VOLT),)
+VCODEC_STEM := $(subst .,P,$(VCODEC_VOLT))
+ANA_CFG_FLAGS += -DVCODEC_$(VCODEC_STEM)
+PMU_CFG_FLAGS += -DVCODEC_$(VCODEC_STEM)
+ifneq ($(VCODEC_VOLT),2.5V)
+VCODEC_OFF ?= 1
+ifeq ($(VANA_VOLT),)
+VANA_VOLT := $(VCODEC_VOLT)
+endif
+ifneq ($(VCODEC_VOLT),$(VANA_VOLT))
+$(error Incompatible VCODEC_VOLT=$(VCODEC_VOLT) with VANA_VOLT=$(VANA_VOLT))
+endif
+endif
+endif
+
+ifeq ($(VCODEC_OFF),1)
+PMU_CFG_FLAGS += -DVCODEC_OFF
+endif
+
+VANA_VOLT ?= 1.6V
+ifneq ($(filter-out 1.5V 1.6V 1.8V,$(VANA_VOLT)),)
+$(error Invalid VANA_VOLT=$(VANA_VOLT))
+endif
+ifneq ($(VANA_VOLT),)
+VANA_STEM := $(subst .,P,$(VANA_VOLT))
+PMU_CFG_FLAGS += -DVANA_$(VANA_STEM)
+endif
+
+ifeq ($(PMU_DCDC_ANA2_SUPPORT),1)
+PMU_CFG_FLAGS += -DPMU_DCDC_ANA2_SUPPORT
+endif
+
+ifeq ($(USB_HIGH_SPEED),1)
+ANA_CFG_FLAGS += -DUSB_HIGH_SPEED
+PMU_CFG_FLAGS += -DUSB_HIGH_SPEED
+USBPHY_CFG_FLAGS += -DUSB_HIGH_SPEED
+endif
+
+ifeq ($(CHIP_HAS_SPIPHY),1)
+USBPHY_CFG_FLAGS += -DCHIP_HAS_SPIPHY
+endif
+
+ifeq ($(USB_HS_LOOPBACK_TEST),1)
+USBPHY_CFG_FLAGS += -DUSB_HS_LOOPBACK_TEST
+endif
+
+ifeq ($(POWER_MODE),LDO)
+PMU_CFG_FLAGS += -DLDO_MODE
+else
+ifeq ($(POWER_MODE),DIG_DCDC)
+PMU_CFG_FLAGS += -DDIG_DCDC_MODE
+else
+ifeq ($(POWER_MODE),ANA_DCDC)
+PMU_CFG_FLAGS += -DANA_DCDC_MODE
+else
+ifneq ($(POWER_MODE),)
+$(error Invalid POWER_MODE: $(POWER_MODE))
+endif
+endif
+endif
+endif
+
+ANA_CFG_FLAGS += $(MAX_DAC_OUTPUT_FLAGS)
+
+ifeq ($(AUDIO_INPUT_CAPLESSMODE),1)
+ANA_CFG_FLAGS += -D_MIC_CAPLESSMODE_
+endif
+
+ifeq ($(AUDIO_INPUT_LARGEGAIN),1)
+ANA_CFG_FLAGS += -D_MIC_LARGEGAIN_
+endif
+
+ifeq ($(AUDIO_OUTPUT_DIFF),1)
+ANA_CFG_FLAGS += -DAUDIO_OUTPUT_DIFF
+PMU_CFG_FLAGS += -DAUDIO_OUTPUT_DIFF
+endif
+
+ifeq ($(AUDIO_OUTPUT_DC_CALIB),1)
+ANA_CFG_FLAGS += -DAUDIO_OUTPUT_DC_CALIB
+endif
+ifeq ($(AUDIO_OUTPUT_DC_CALIB_ANA),1)
+ANA_CFG_FLAGS += -DAUDIO_OUTPUT_DC_CALIB_ANA
+endif
+
+ifeq ($(USB_AUDIO_TEST),1)
+CODEC_HIGH_QUALITY ?= 1
+endif
+ifeq ($(CODEC_HIGH_QUALITY),1)
+ANA_CFG_FLAGS += -DCODEC_HIGH_QUALITY
+PMU_CFG_FLAGS += -DCODEC_HIGH_QUALITY
+endif
+
+ifeq ($(AUDIO_RESAMPLE),1)
+ANA_CFG_FLAGS += -D__AUDIO_RESAMPLE__
+PMU_CFG_FLAGS += -D__AUDIO_RESAMPLE__
+endif
+
+ifeq ($(ANC_TEST),1)
+ANA_CFG_FLAGS += -DANC_TEST
+PMU_CFG_FLAGS += -DANC_TEST
+endif
+
+ifeq ($(ANC_INIT_SPEEDUP),1)
+ANA_CFG_FLAGS += -DANC_INIT_SPEEDUP
+endif
+
+ifeq ($(ANC_FF_ENABLED),1)
+ANA_CFG_FLAGS += -DANC_FF_ENABLED
+endif
+
+ifeq ($(ANC_FB_ENABLED),1)
+ANA_CFG_FLAGS += -DANC_FB_ENABLED
+endif
+
+ifneq ($(ANA_DC_CALIB_L),)
+ANA_CFG_FLAGS += -DANA_DC_CALIB_L=$(ANA_DC_CALIB_L)
+endif
+ifneq ($(ANA_DC_CALIB_R),)
+ANA_CFG_FLAGS += -DANA_DC_CALIB_R=$(ANA_DC_CALIB_R)
+endif
+
+ifneq ($(BT_MIC_GAIN_CTRL),)
+ANA_CFG_FLAGS += -D__BT_MIC_GAIN_CTRL__
+endif
+
+
+

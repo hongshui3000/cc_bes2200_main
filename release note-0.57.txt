@@ -1,0 +1,341 @@
+best2200 tws 0.2 version
+support feature£º
+1.a2dp aac sbc decoder
+2.hfp  cvsd msbc aircode
+3.hw resample for 44100 and 48000
+4.software resample for any samplerate
+5.GD25Q80C GD25Q32C GD25LQ32C EN25S80B flash support
+6.audio output single-end support
+7.hw fir support
+8.echo cancel and noise suppress algo support
+9 audio class g support
+10.crtstal off function is support
+11.104m freq without pll is support
+12.tws feature
+13.call in tws mode (not perfect will done in eco2 chip)
+14.ota bin support
+
+will support in furture:
+1.tws master/slave exchange feature
+2.call in tws mode improve
+3.mic exchange in call processing
+4.new algorithm of call will support
+
+
+best2200 tws 0.3 version
+update feature:
+1.bt rf test mode update  for cbt auto test mode
+2.ble rf test mode update for ble tx power is too low
+3.fix  r channel can't play music
+4.add new noise suppress algorithm for call
+5.enable 16k sample rate capture for msbc
+6.update audio gain table for 17mw output
+7.update 2200 platform  code 
+8.add led indicate for rf testmode
+9.fix dac pop sound when open and close codec
+
+
+bes2200 tws 0.31 version
+1.add led1 led2 driver
+2,resolve the tws die when distant test
+3.add release lib for open/close aac open/close msbc
+4.add hw iir eq
+5.update rf setting for rx 
+6.update rf testmode procedure
+ 
+bes2200 tws 0.4 version
+1.add verd chip bt driver 
+2.add audio hw resample driver 
+3.change flash freq to 52m
+4.change sbc player sys freq to 52m
+5.dual channel call in tws mode
+ 
+ 
+bes2200 tws 0.41 version
+1.add crystal off for new chip d
+2.new dcdc setting for chip d  
+3.set vcore to 1.0
+4.update codec setting
+5.change mic gain setting function for bt
+#define ANALOG_ADC_GAIN1    0x7
+#define ANALOG_ADC_GAIN2    0x7
+6.update testmode patch
+7.fix hw iir bug 
+8.fix heap size and system bug
+9.disable float print
+10.fix 2channel call bug 
+11.add master/slave patch for tws auto switch role
+ 
+ 
+ bes2200 tws 0.42 version
+1.decrease flash ram 
+2.decrease tws ram
+3.add tws slave key process 
+4.add delay to sco stop
+ 
+ 
+ bes2200 tws 0.42 patch1 version
+1.reslove tws no music error
+
+ bes2200 tws 0.43 patch1 version
+1. add acc error for meta10
+2. add suspend and resume error
+3. add m/s switch patch
+4.add agc to default
+
+bes2200 tws 0.43 patch1 version
+1.support pwm
+2.fix i2s bug when resample open
+3.update flash driver
+4.fix tws reconnect role switch bug for make mobile phone to master
+5.fix sco bug for slave no voice and disconnect
+
+bes2200 tws 0.45 version
+1.change ble test baudrate to 115200
+2.add auto save device info after connect
+3.fix msbc unalign error
+4.fix msbc l/r lost snyc error
+5.remove avrcp between tws use spp to update a2dp volume
+6.fix avrcp can't send packet   
+
+
+bes2200 tws 0.5 version
+1.add avrcp delay timer to connect to avoid connect fail
+2.add delay report to a2dp streaming
+3.add dual mic denoise algo to call
+4.fix afh error
+5.fix spp bug
+
+bes2200 tws 0.51 version
+1.add testmode in charging
+2.add unsniff req error patch
+3.add msbc sync to aovoid tws call delay
+4.fix afh update error for dual channel call 
+5.fix tws hfp volume different during call
+
+
+bes2200 tws 0.52 version
+1.imporve app battery 
+2.update rf config 
+3.update eq process
+4.improve bt pcm trigger
+5.improve plc
+6.add ble bt dual mode patch
+                                          
+bes2200 tws 0.53 version                                          
+1.fix stream error when aac connect at dual call setting
+2.add ci test setting
+3.fix tws connect role switch process error
+4.fix dac cal bit width error
+5. make tws reconnect faster
+6.avoid pcm trigger fail
+7.fix app thread to 52m
+8.add ble patch 
+9.add iic 2 interface
+10.fix fix connect hdl don't match the linkid
+11.fix hfp confict connect
+12.fix a2dp confict connnect
+13.add auth fail callback
+14.fix afh follow mobile fail
+15. fix role switch error
+16.add trace crash dump
+17.fix 26*4 config for die
+18.improve pmu setting
+19.fix dual chanl close error
+20.check max slot for tws master
+21.improve msbc plc
+22.test patch to  nosig test
+23.improve enqueue
+
+bes2200 tws 0.54 version                                          
+1.disable a2dp stopsniff
+2.remove linid map to chonnect handle
+3.disable sniff mode when music playing
+4.check max slot when restore playing
+5.reopen ble scan when connect mobile fail
+6.set ble scan window to 8 to avoid the disconnect
+7.improve the msbc plc
+8.improve the speech agc
+9. fix a2dp state machine
+10.fix read controller mem process
+11.fix stop sco reentry
+12.fix connect timeout error
+
+
+bes2200 tws 0.55 version                                          
+1.update rf setting
+2.ignore sbc filter
+3.fix tx packet to 2m
+
+
+bes2200 tws 0.55 patch1 version                                          
+1.fix sco status don't clear  slave recreate sco link
+                                                                
+                                                                
+bes2200 tws 0.56 version                                                                                                          
+1.update flash cmd ext for download
+2.fix tws device info rewrite by mobile device
+3.when no device connected close tws device
+4.fix unsniff req error
+5.add bitpool adjust function
+6.update bt driver
+7.fix sco delay between master and slave
+8.add dfe mode 
+9.accept max slot req for music
+10. fix msbc packet lost header
+11.stop sco when connect timeout
+12.fix no music when a2dp start               
+                                           
+best2200 tws 0.57 version
+1.fix ble assert at dual mode 
+2.fix double ble scan and adv error
+3.fix sco trigger fail restart
+4,disable 3m esco
+5.fix role switch error 
+6.fix 48k and 44.1k switch error
+7.fix afc under sco error
+8.fix flash error to 26m 
+9. delay auth for connect fail
+10.update new rf setting                   
+                                           
+                                           
+                                                                
+bt rf measure report:
+rx sensitivy 1.1mpacket -92db  2,2m packet  -94db  3.3m packet -87db
+tx power :6db
+
+power comsumption:
+tws master mode sbc bitpool 53 audio output power 17mw single ended @16ohm : 
+tws master mode sbc bitpool 53 audio output power 4mw single ended @16ohm : 
+tws slave mode sbc bitpool 53 audio output power 17mw single ended @16ohm : 
+tws slave mode sbc bitpool 53 audio output power 4mw single ended @16ohm : 
+tws master mode aac audio output power 17mw single ended @16ohm : 
+tws master mode aac audio output power 4mw single ended @16ohm : 
+tws slave mode aac  audio output power 17mw single ended @16ohm : 
+tws slave mode aac  audio output power 4mw single ended @16ohm : 
+
+tws idle mode:  master :            slave:
+
+audio:
+53 bitpool thd+n:0.05%
+snr:
+
+
+
+
+hardware config instruction:
+in target.mk 
+
+1.flash config  
+FLASH_CHIP	?= GD25Q80C GD25Q32C GD25LQ32C EN25S80B
+
+2.AUDIO_OUTPUT_DIFF ?= 0
+0: single-ended
+1:difference
+
+3.aac config
+A2DP_AAC_ON ?= 1
+A2DP_AAC_DIRECT_TRANSFER ?= 1
+all 0: disable aac
+all 1:support aac in tws mode
+
+4.export VCRYSTAL_OFF ?= 1
+if the vana is combine with vcrystal set the function to 1 neither to 0
+
+5.export ANA_26M_X4 ?= 1
+1: use 104m freq without pll
+0: use >52m freq with pll
+
+
+6.export SW_PLAYBACK_RESAMPLE ?= 0
+export RESAMPLE_ANY_SAMPLE_RATE ?= 0
+all 1: open software resample for music player
+all 0:close this function 
+
+7.    -D__TWS_1CHANNEL_PCM__
+define this function to support tws device output 1channel audio
+
+IN TGT_HARDWARE.C
+
+8.LED MAP
+const struct HAL_IOMUX_PIN_FUNCTION_MAP cfg_hw_pinmux_pwl[CFG_HW_PLW_NUM] = {
+    {HAL_IOMUX_PIN_P0_0, HAL_IOMUX_FUNC_AS_GPIO, HAL_IOMUX_PIN_VOLTAGE_VIO, HAL_IOMUX_PIN_PULLUP_ENALBE},
+    {HAL_IOMUX_PIN_P0_1, HAL_IOMUX_FUNC_AS_GPIO, HAL_IOMUX_PIN_VOLTAGE_VIO, HAL_IOMUX_PIN_PULLUP_ENALBE},
+};
+
+9.KEY MAP
+const struct HAL_KEY_GPIOKEY_CFG_T cfg_hw_gpio_key_cfg[CFG_HW_GPIOKEY_NUM] = {
+    {HAL_KEY_CODE_FN1,{HAL_IOMUX_PIN_P1_0, HAL_IOMUX_FUNC_AS_GPIO, HAL_IOMUX_PIN_VOLTAGE_VIO, HAL_IOMUX_PIN_PULLUP_ENALBE}},
+    {HAL_KEY_CODE_FN2,{HAL_IOMUX_PIN_P1_1, HAL_IOMUX_FUNC_AS_GPIO, HAL_IOMUX_PIN_VOLTAGE_VIO, HAL_IOMUX_PIN_PULLUP_ENALBE}},
+};
+
+10.AUDIO GAIN MAP
+const struct CODEC_DAC_VOL_T codec_dac_vol[TGT_VOLUME_LEVEL_QTY] = {
+    {TX_PA_GAIN,0x03,-11},
+    {TX_PA_GAIN,0x03,-99},
+    {TX_PA_GAIN,0x03,-45},
+    {TX_PA_GAIN,0x03,-42},
+    {TX_PA_GAIN,0x03,-39},
+    {TX_PA_GAIN,0x03,-36},
+    {TX_PA_GAIN,0x03,-33},
+    {TX_PA_GAIN,0x03,-30},
+    {TX_PA_GAIN,0x03,-27},
+    {TX_PA_GAIN,0x03,-24},
+    {TX_PA_GAIN,0x03,-21},
+    {TX_PA_GAIN,0x03,-18},
+    {TX_PA_GAIN,0x03,-15},
+    {TX_PA_GAIN,0x03,-12},
+    {TX_PA_GAIN,0x03, -9},
+    {TX_PA_GAIN,0x03, -6},
+    {TX_PA_GAIN,0x03, -3},
+    {TX_PA_GAIN,0x03,  0},  //0dBm
+};
+
+11.CHARGER DETECTER 
+const struct HAL_IOMUX_PIN_FUNCTION_MAP app_battery_ext_charger_detecter_cfg = {
+    HAL_IOMUX_PIN_NUM, HAL_IOMUX_FUNC_AS_GPIO, HAL_IOMUX_PIN_VOLTAGE_VIO, HAL_IOMUX_PIN_PULLUP_ENALBE
+};
+
+const struct HAL_IOMUX_PIN_FUNCTION_MAP app_battery_ext_charger_indicator_cfg = {
+    HAL_IOMUX_PIN_NUM, HAL_IOMUX_FUNC_AS_GPIO, HAL_IOMUX_PIN_VOLTAGE_VIO, HAL_IOMUX_PIN_PULLUP_ENALBE
+};
+
+12.fir config
+
+const FIR_CFG_T audio_eq_fir_cfg = {
+    .gain0 = 6,
+    .gain1 = 6,
+    .len = 128,
+    .coef = {
+        #include "res/eq/EQ_COEF.txt"
+    }
+};
+
+
+in tgt_hardware,h
+
+13.sbc bitpool
+#define BTA_AV_CO_SBC_MAX_BITPOOL  39
+
+14.speaker map
+
+#define CFG_HW_AUD_OUTPUT_PATH_SPEAKER_DEV (AUD_CHANNEL_MAP_CH0)
+
+15.mic map
+#define CFG_HW_AUD_INPUT_PATH_MAINMIC_DEV (AUD_CHANNEL_MAP_CH0 | AUD_VMIC_MAP_VMIC1)
+#define CFG_HW_AUD_INPUT_PATH_LINEIN_DEV (AUD_CHANNEL_MAP_CH0 | AUD_CHANNEL_MAP_CH1)
+
+16.adc gain
+#define ANALOG_ADC_A_GAIN_DB (30)
+#define ANALOG_ADC_B_GAIN_DB (30)
+
+#define CODEC_SADC_VOL (7)
+
+#define MAX_DIG_DAC_REGVAL (21)
+
+17.battery info
+//battery info
+#define APP_BATTERY_MIN_MV (3200)
+#define APP_BATTERY_PD_MV   (3100)
+
+#define APP_BATTERY_MAX_MV (4200)

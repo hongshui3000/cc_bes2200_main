@@ -1,0 +1,119 @@
+CHIP		?= best1000
+
+DEBUG		?= 1
+
+FPGA		?= 0
+
+MBED		?= 1
+
+RTOS		?= 1
+
+WATCHER_DOG ?= 0
+
+DEBUG_PORT	?= 1
+# 0: usb
+# 1: uart0
+# 2: uart1
+
+FLASH_CHIP	?= GD25Q80C GD25Q32C
+# GD25Q80C
+# GD25Q32C
+# ALL
+
+AUDIO_OUTPUT_MONO ?= 0
+
+AUDIO_OUTPUT_DIFF ?= 1
+
+HW_FIR_EQ_PROCESS ?= 0
+
+SW_IIR_EQ_PROCESS ?= 0
+
+AUDIO_RESAMPLE ?= 0
+
+AUDIO_OUTPUT_VOLUME_DEFAULT ?= 10
+# range:1~16
+
+AUDIO_INPUT_CAPLESSMODE ?= 0
+
+AUDIO_INPUT_LARGEGAIN ?= 0
+
+AUDIO_RESAMPLE ?= 0
+
+AUDIO_CODEC_ASYNC_CLOSE ?= 1
+
+AUDIO_SCO_BTPCM_CHANNEL ?= 1
+
+AUDIO_EQ_PROCESS ?= 0
+
+SPEECH_TX_AEC ? = 1
+
+SPEECH_TX_NS ?= 1
+
+SPEECH_RX_PLC ?= 1
+
+SPEECH_TX_EQ ?= 1
+
+SPEECH_RX_NS ?= 1
+
+SPEECH_RX_EQ ?= 1
+
+HFP_1_6_ENABLE ?= 0
+
+MSBC_PLC_ENABLE ?= 0
+
+MSBC_16K_SAMPLE_RATE ?= 0
+
+SBC_FUNC_IN_ROM ?= 0
+
+VOICE_DETECT ?= 0
+
+VOICE_PROMPT ?= 1
+
+VOICE_RECOGNITION ?= 0
+
+BLE ?= 0
+
+BTADDR_GEN ?= 1
+
+BT_ONE_BRING_TWO ?= 1
+
+A2DP_AAC_ON ?= 0
+
+FACTORY_MODE ?= 1
+
+ENGINEER_MODE ?= 1
+
+ULTRA_LOW_POWER	?= 1
+
+BLE ?= 0
+
+init-y		:=
+core-y		:= platform/ services/ apps/ utils/cqueue/ utils/list/ services/multimedia/ utils/intersyshci/
+KBUILD_CPPFLAGS += -Iplatform/cmsis/inc -Iservices/audioflinger -Iplatform/hal -Iservices/fs/ -Iservices/fs/sd -Iservices/fs/fat  -Iservices/fs/fat/ChaN
+
+KBUILD_CPPFLAGS += \
+    -D_AUTO_SWITCH_POWER_MODE__ \
+    -D_BEST1000_QUAL_DCDC_ \
+    -D__APP_KEY_FN_STYLE_A__ \
+
+#-D_AUTO_SWITCH_POWER_MODE__
+#-D_BEST1000_QUAL_DCDC_
+#-D__APP_KEY_FN_STYLE_A__
+#-D__APP_KEY_FN_STYLE_B__
+#-D__BT_ONE_BRING_TWO__
+#-D__EARPHONE_STAY_BOTH_SCAN__
+#-D__POWERKEY_CTRL_ONOFF_ONLY__
+#-DFLASH_REGION_BASE=0x6C018000
+
+LDS_FILE	:= best1000.lds
+
+KBUILD_CPPFLAGS +=
+
+KBUILD_CFLAGS +=
+
+LIB_LDFLAGS += -lstdc++ -lsupc++
+
+#CFLAGS_IMAGE += -u _printf_float -u _scanf_float
+
+#LDFLAGS_IMAGE += --wrap main
+
