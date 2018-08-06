@@ -900,8 +900,9 @@ BOOL A2DP_Init(void);
  *      does not contain a valid pointer. (XA_ERROR_CHECK only).  
  */
 BtStatus A2DP_Register(A2dpStream  *Stream, 
-                       AvdtpCodec  *Codec,
+                       AvdtpCodec  *Codec, AvdtpContentProt *Cp,
                        A2dpCallback Callback);
+
 
 /*---------------------------------------------------------------------------
  * A2DP_Deregister()

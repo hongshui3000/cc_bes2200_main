@@ -243,9 +243,9 @@ int besmain(void)
     {
         memset(&(app_bt_device.a2dp_stream[i]), 0, sizeof(app_bt_device.a2dp_stream[i]));
         memset(&(app_bt_device.avrcp_channel[i]), 0, sizeof(app_bt_device.avrcp_channel[i]));
-    memset(&(app_bt_device.hf_command[i]), 0, sizeof(app_bt_device.hf_command[i]));
+        memset(&(app_bt_device.hf_command[i]), 0, sizeof(app_bt_device.hf_command[i]));
         memset(&(app_bt_device.hf_channel[i]), 0, sizeof(app_bt_device.hf_channel[i]));
-    memset(&(app_bt_device.spp_dev[i]), 0, sizeof(app_bt_device.spp_dev[i]));
+        memset(&(app_bt_device.spp_dev[i]), 0, sizeof(app_bt_device.spp_dev[i]));
     }
 #ifdef CHIP_BEST1000
     
@@ -299,7 +299,17 @@ int besmain(void)
     a2dp_aac_avdtpcodec.elemLen  = sizeof(a2dp_codec_aac_elements);
     app_bt_device.a2dp_aac_stream.type = A2DP_STREAM_TYPE_SINK;
 #ifndef __BT_ONE_BRING_TWO__
-    A2DP_Register(&app_bt_device.a2dp_aac_stream, &a2dp_aac_avdtpcodec, a2dp_callback);
+#ifdef __A2DP_AVDTP_CP__
+    //TRACE("##a2dp_avdtpCp:%x",a2dp_avdtpCp);
+    a2dp_avdtpCp[0].cpType = AVDTP_CP_TYPE_SCMS_T;
+    a2dp_avdtpCp[0].data = (U8 *)&a2dp_avdtpCp_securityData;
+    a2dp_avdtpCp[0].dataLen = 1;
+    A2DP_Register(&app_bt_device.a2dp_aac_stream, &a2dp_aac_avdtpcodec, &a2dp_avdtpCp[0], a2dp_callback);
+    //A2DP_AddContentProtection(&app_bt_device.a2dp_aac_stream, &a2dp_avdtpCp[0]);
+    A2DP_AddContentProtection(&app_bt_device.a2dp_stream[0], &a2dp_avdtpCp[0]);
+#else
+     A2DP_Register(&app_bt_device.a2dp_aac_stream, &a2dp_aac_avdtpcodec, NULL, a2dp_callback);
+#endif 
     avdtp_get_aacenable_callback = avdtp_Get_aacEnable_Flag;
 #endif
     TRACE("a2dp_aac_stream = 0x%x \n", &app_bt_device.a2dp_aac_stream);
@@ -314,8 +324,21 @@ int besmain(void)
              A2DP_Register(&app_bt_device.a2dp_aac_stream, &a2dp_aac_avdtpcodec, a2dp_callback);
 #endif
 #endif
-        A2DP_Register(&app_bt_device.a2dp_stream[i], &a2dp_avdtpcodec, a2dp_callback);
 
+#ifdef __A2DP_AVDTP_CP__
+        a2dp_avdtpCp[i].cpType = AVDTP_CP_TYPE_SCMS_T;
+        a2dp_avdtpCp[i].data = (U8 *)&a2dp_avdtpCp_securityData;
+        a2dp_avdtpCp[i].dataLen = 1;
+        A2DP_Register(&app_bt_device.a2dp_stream[i], &a2dp_avdtpcodec, &a2dp_avdtpCp[i], a2dp_callback);
+        A2DP_AddContentProtection(&app_bt_device.a2dp_stream[i], &a2dp_avdtpCp[i]);
+        //TRACE("##@a2dp_stream = 0x%x \n", &app_bt_device.a2dp_stream[0].stream);
+        //TRACE("##@a2dp_stream cp= 0x%x  %x \n", app_bt_device.a2dp_stream[0].stream.cpList.Flink,app_bt_device.a2dp_stream[0].stream.cpList.Blink);
+        //TRACE("##@a2dp_stream cp= 0x%x  %x \n", &app_bt_device.a2dp_stream[0].stream.cpList.Flink,&app_bt_device.a2dp_stream[0].stream.cpList.Blink);
+
+        
+#else
+        A2DP_Register(&app_bt_device.a2dp_stream[i], &a2dp_avdtpcodec, NULL, a2dp_callback); 
+#endif
         /* avrcp register */        
 #ifdef __AVRCP_EVENT_COMMAND_VOLUME_SKIP__
         AVRCP_Register(&app_bt_device.avrcp_channel[i], avrcp_callback_CT, AVRCP_CT_CATEGORY_2 );
@@ -347,8 +370,6 @@ int besmain(void)
     app_tws_env_init(&tws_env_cfg);
     init_tws(&tws_env_cfg);
 #endif
-
-
     /* bt local name */
 #ifdef RANDOM_BTADDR_GEN
     devinfo.btd_addr = randaddrgen_get_bt_addr();

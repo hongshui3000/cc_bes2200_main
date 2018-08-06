@@ -1183,7 +1183,8 @@ BtStatus AVDTP_Disconnect(AvdtpChannel *Chnl);
  *
  *     BT_STATUS_IN_USE - The specified stream is already registered.  
  */
-BtStatus AVDTP_RegisterStream(AvdtpStream *Stream, AvdtpCodec *Codec);
+BtStatus AVDTP_RegisterStream(AvdtpStream *Stream, AvdtpCodec *Codec, AvdtpContentProt *Cp);
+
 
 /*---------------------------------------------------------------------------
  * AVDTP_DeregisterStream()

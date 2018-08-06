@@ -191,6 +191,11 @@ enum BT_DEVICE_ID_T{
     BT_DEVICE_NUM
 };
 
+#ifdef __A2DP_AVDTP_CP__
+extern AvdtpContentProt a2dp_avdtpCp[BT_DEVICE_NUM];
+extern U8 a2dp_avdtpCp_securityData[AVDTP_MAX_CP_VALUE_SIZE];
+#endif
+
 //Modified by ATX : Leon.He_20180622: add define for aac white list
 enum APP_VID_IN_AAC_WHITE_LIST_T{
 	APP_VID_IN_AAC_WHITE_LIST_NOT_SURE = 0,

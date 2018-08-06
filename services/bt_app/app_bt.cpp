@@ -989,7 +989,16 @@ static void set_a2dp_to_aac_limited(void)
 		return;
 	A2DP_Deregister(&app_bt_device.a2dp_aac_stream);
 	a2dp_aac_avdtpcodec.elements = (U8*) (&a2dp_codec_aac_elements_limited);
-	A2DP_Register(&app_bt_device.a2dp_aac_stream, &a2dp_aac_avdtpcodec,a2dp_callback);
+#ifdef __A2DP_AVDTP_CP__
+                    a2dp_avdtpCp[0].cpType = AVDTP_CP_TYPE_SCMS_T;
+                    a2dp_avdtpCp[0].data = (U8 *)&a2dp_avdtpCp_securityData;
+                    a2dp_avdtpCp[0].dataLen = 1;
+                    A2DP_Register(&app_bt_device.a2dp_aac_stream, &a2dp_aac_avdtpcodec, &a2dp_avdtpCp[0], a2dp_callback);
+                    A2DP_AddContentProtection(&app_bt_device.a2dp_aac_stream, &a2dp_avdtpCp[0]);
+#else
+                    A2DP_Register(&app_bt_device.a2dp_aac_stream, &a2dp_aac_avdtpcodec, NULL, a2dp_callback);
+
+#endif       
 }
 
 //Modified by ATX : Leon.He_20180625: add app_acc_limited flag

@@ -53,6 +53,12 @@ extern "C" {
 #if (SPP_CLIENT == XA_ENABLED)
 extern BtRemoteDevice *sppBtDevice;
 #endif
+#ifdef __A2DP_AVDTP_CP__
+AvdtpContentProt a2dp_avdtpCp[BT_DEVICE_NUM];
+U8 a2dp_avdtpCp_securityData[AVDTP_MAX_CP_VALUE_SIZE]=
+{
+};
+#endif
 
 extern void spp_callback(SppDev *locDev, SppCallbackParms *Info);
 
@@ -1262,6 +1268,10 @@ void a2dp_callback(A2dpStream *Stream, const A2dpCallbackParms *Info)
     AvdtpMediaHeader header;
     static uint32_t last_seq = 0;
     int skip_frame=0;
+#ifdef __A2DP_AVDTP_CP__    
+    static AvdtpContentProt   setconfig_cp;
+#endif
+    
 #if defined(__TWS__)
     A2dpStream * tws_source_stream = NULL;
     AvdtpCodec tws_set_codec;
@@ -1292,6 +1302,10 @@ if (tws_a2dp_callback(Stream, Info))
             break;
         case A2DP_EVENT_STREAM_OPEN:
             TRACE("::A2DP_EVENT_STREAM_OPEN stream=%x,stream_id:%d, sample_rate codec.elements 0x%x\n", Stream,stream_id_flag.id,Info->p.configReq->codec.elements[0]);
+#ifdef __A2DP_AVDTP_CP__
+            A2DP_SecurityControlReq(Stream,(U8 *)&a2dp_avdtpCp_securityData,1);
+#endif
+
             if(Info->p.configReq->codec.codecType == AVDTP_CODEC_TYPE_SBC)
             {
 #if defined(A2DP_AAC_ON)
@@ -1665,10 +1679,40 @@ if (tws_a2dp_callback(Stream, Info))
             tws_set_channel_cfg(&setconfig_codec);
 #endif
             break;
+#ifdef __A2DP_AVDTP_CP__
+        case A2DP_EVENT_CP_INFO:
+            TRACE("::A2DP_EVENT_CP_INFO %d\n", Info->event);
+            TRACE("cpType:%x\n",Info->p.cp->cpType);
+            setconfig_cp.cpType = Info->p.cp->cpType;
+            setconfig_cp.data = Info->p.cp->data;
+            setconfig_cp.dataLen = Info->p.cp->dataLen;
+            break;
+#endif
         case A2DP_EVENT_GET_CONFIG_IND:
             TRACE("::A2DP_EVENT_GET_CONFIG_IND %d\n", Info->event);
+#ifdef __A2DP_AVDTP_CP__
+            if(Info->p.capability->type & AVDTP_SRV_CAT_CONTENT_PROTECTION){
+                TRACE("support CONTENT_PROTECTION\n");
+                A2DP_SetStreamConfig(Stream, &setconfig_codec, &setconfig_cp);
+            }else{
+                TRACE("no CONTENT_PROTECTION\n");
+                A2DP_SetStreamConfig(Stream, &setconfig_codec, NULL);
+            }
+#else
             A2DP_SetStreamConfig(Stream, &setconfig_codec, NULL);
+#endif
             break;
+
+#ifdef __A2DP_AVDTP_CP__
+            case A2DP_EVENT_STREAM_SECURITY_IND:
+                TRACE("::A2DP_EVENT_STREAM_SECURITY_IND %d\n", Info->event);
+                DUMP8("%x ",Info->p.data,Info->len);
+                A2DP_SecurityControlRsp(Stream,&Info->p.data[1],Info->len-1,Info->error);
+                break;
+            case A2DP_EVENT_STREAM_SECURITY_CNF:
+                TRACE("::A2DP_EVENT_STREAM_SECURITY_CNF %d\n", Info->event);
+                break;
+#endif
         case A2DP_EVENT_STREAM_RECONFIG_IND:
             TRACE("::A2DP_EVENT_STREAM_RECONFIG_IND %d\n", Info->event);
             A2DP_ReconfigStreamRsp(Stream,A2DP_ERR_NO_ERROR,0);

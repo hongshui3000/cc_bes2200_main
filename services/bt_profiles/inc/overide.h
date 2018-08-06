@@ -970,6 +970,7 @@
 //#define __BT_REAL_ONE_BRING_TWO__
 #define __EARPHONE__
 #define __AUTOPOWEROFF__
+#define __A2DP_AVDTP_CP__
 //#define TWS_RING_SYNC
 #endif /* __OVERIDE_H */
 
