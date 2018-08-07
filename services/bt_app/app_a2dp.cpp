@@ -1743,7 +1743,8 @@ void a2dp_suspend_music_force(void)
     app_audio_manager_sendrequest(APP_BT_STREAM_MANAGER_STOP,BT_STREAM_SBC,stream_id_flag.id,0,0,0);
 }
 
-
+ //Modified by ATX : Parker.Wei_20180806  
+ 
 /*AVRCP SetAbsoluteVolume  
 the SetAbsoluteVolume value 0x00~0x7f  Response to the AG Volume Level 0~16
 the bt local Volume Level 1~17 Response to the AG Volume Level 0~16
