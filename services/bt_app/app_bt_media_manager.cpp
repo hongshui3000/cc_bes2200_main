@@ -440,6 +440,7 @@ void  bt_media_start(uint8_t stream_type,enum BT_DEVICE_ID_T device_id,AUD_ID_EN
                 if(bt_media_get_current_media() == BT_STREAM_VOICE)
 #endif                    
                 {
+#ifdef __BT_WARNING_TONE_MERGE_INTO_STREAM_SBC__
                     //if call is not active so do media report
                     if (app_ring_merge_start(media_id))//Modified by ATX : Leon.He_20180704
                     {
@@ -447,6 +448,7 @@ void  bt_media_start(uint8_t stream_type,enum BT_DEVICE_ID_T device_id,AUD_ID_EN
                         bt_media_clear_all_media_type();
                     }
                     else
+#endif                
                     {
                         MEDIA_MANAGE_TRACE("stop sco and do media report\n");
 

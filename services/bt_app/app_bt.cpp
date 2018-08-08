@@ -155,7 +155,11 @@ void PairingTimeoutHandler(void)
 
 #ifdef __POWER_OFF_AFTER_PAIR_TIMEOUT__
       TRACE("!!!power off after pairing timeout\n");  
-      app_shutdown();               
+#ifdef __DEEP_SLEEP_FAKE_POWER_OFF__
+      app_fake_poweroff();
+#else
+      app_shutdown();              
+#endif
 #else
 
 		if(pdl_sizes==0)
