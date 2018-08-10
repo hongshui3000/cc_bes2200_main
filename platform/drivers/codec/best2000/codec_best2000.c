@@ -297,7 +297,11 @@ static void codec_hw_open(void)
         codec_timer = osTimerCreate (osTimer(CODEC_TIMER), osTimerOnce, NULL);
     }
     osTimerStop(codec_timer);
+#endif
 
+    // Audio resample: Might have different clock source, so must be reconfigured here
+    hal_codec_open(CODEC_INT_INST);
+#ifdef __CODEC_ASYNC_CLOSE__
     CODEC_TRACE("%s: codec_hw_state=%d", __func__, codec_hw_state);
 
     if (codec_hw_state == CODEC_HW_STATE_CLOSED) {
@@ -314,14 +318,15 @@ static void codec_hw_open(void)
 #endif
 
     hal_sys_wake_lock(HAL_SYS_WAKE_LOCK_USER_CODEC);
-
-    hal_codec_open(CODEC_INT_INST);
     analog_aud_codec_open();
 }
 
 static void codec_hw_close(void)
 {
     CODEC_TRACE("%s", __func__);
+    // Audio resample: Might have different clock source, so close now and reconfigure when open
+    hal_codec_close(CODEC_INT_INST);
+
 
 #ifdef __CODEC_ASYNC_CLOSE__
     CODEC_TRACE("%s: codec_hw_state=%d", __func__, codec_hw_state);
@@ -344,7 +349,6 @@ static void codec_hw_close(void)
 #endif
 
     analog_aud_codec_close();
-    hal_codec_close(CODEC_INT_INST);
 
     hal_sys_wake_unlock(HAL_SYS_WAKE_LOCK_USER_CODEC);
 }
