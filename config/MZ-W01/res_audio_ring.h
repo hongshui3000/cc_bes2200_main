@@ -4,14 +4,14 @@ const int16_t RES_AUD_RING_SAMPRATE_8000 [] = {
 };
 
 const int16_t RES_AUD_RING_SAMPRATE_8000_VOL_MAX [] = {
-#include "res/ring/SOUND_RING_8000_VOL_MAX.txt"
+#include "res/ring/SOUND_RING_8000_VOL_MAX1.txt"
 };
 const int16_t RES_AUD_RING_SAMPRATE_8000_WARNING [] = {
 #include "res/ring/SOUND_RING_8000_WARNING.txt"
 };
 
 const int16_t RES_AUD_RING_SAMPRATE_16000_VOL_MAX [] = {
-#include "res/ring/SOUND_RING_16000_VOL_MAX.txt"
+#include "res/ring/SOUND_RING_16000_VOL_MAX1.txt"
 };
 const int16_t RES_AUD_RING_SAMPRATE_16000_WARNING [] = {
 #include "res/ring/SOUND_RING_16000_WARNING.txt"
