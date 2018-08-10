@@ -96,6 +96,16 @@ static bool reset_paired_device_list(void)
     return true;
 }
 
+static void stop_tws_adv(void)
+{
+	struct nvrecord_env_t *nvrecord_env;
+	nv_record_env_get(&nvrecord_env);
+	if (nvrecord_env->tws_mode.mode == TWSSLAVE) {
+		if (app_tws_ble_reconnect.adv_close_func)
+			app_tws_ble_reconnect.adv_close_func(APP_TWS_CLOSE_BLE_ADV);
+	}
+}
+
 //Modified by ATX : Parke.Wei_20180315
 static bool start_pairing_and_disconnect_all(void)
 {
@@ -123,6 +133,7 @@ static bool start_pairing_and_disconnect_all(void)
 	
 	if (is_find_tws_peer_device_onprocess())
 		find_tws_peer_device_stop();
+	stop_tws_adv();
 	app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BT_DEFAULT_ACCESS_MODE_PAIR, 0,0);
 
 	return true;  
@@ -186,6 +197,7 @@ static bool start_pairing_without_connection(void)
 
 	if (is_find_tws_peer_device_onprocess())
 		find_tws_peer_device_stop();
+	stop_tws_adv();
 	app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BT_DEFAULT_ACCESS_MODE_PAIR, 0,0);
 	return true;
 }
@@ -483,18 +495,26 @@ static bool handle_a2dp_skipr(void)
 
 void master_sync_vol_to_phone_and_slave(uint8_t vol_type)
 {
-	if (tws.tws_mode != TWSMASTER)
-		return;
 	switch (vol_type) {
 	case A2DP_VOL_TYPE:
-		//TRACE("sync a2dp gain\n");
-		tws_player_a2dp_vol_change(a2dp_volume_get_tws());
-		btapp_a2dp_report_speak_gain();
+//TRACE("sync a2dp gain\n");
+		if(tws.tws_mode == TWSMASTER)
+		{
+		    tws_player_a2dp_vol_change(a2dp_volume_get_tws());
+		    btapp_a2dp_report_speak_gain();
+		}
+		else if(tws.tws_mode == TWSON)
+            btapp_a2dp_report_speak_gain();
 		break;
 	case HFP_VOL_TYPE:
-		//TRACE("sync hfp gain\n");
-		tws_player_hfp_vol_change(hfp_volume_get());
-		btapp_hfp_report_speak_gain();
+//TRACE("sync hfp gain\n");
+		if(tws.tws_mode == TWSMASTER)
+		{
+		    tws_player_hfp_vol_change(hfp_volume_get());
+		    btapp_hfp_report_speak_gain();
+		}
+		else if(tws.tws_mode == TWSON)
+            btapp_hfp_report_speak_gain();
 		break;
 	default:
 		break;
