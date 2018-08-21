@@ -751,7 +751,7 @@ int app_play_audio_onoff(bool onoff, APP_AUDIO_STATUS* status)
             trig_ticks = tws_media_play_calc_ring_sync_trigger_time();
             TRACE("trig_ticks:%d\n",trig_ticks);
 
-            app_tws_set_trigger_time(trig_ticks);
+            app_tws_set_trigger_time(trig_ticks, true);
         }
 #endif
 

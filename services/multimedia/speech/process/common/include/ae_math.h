@@ -62,4 +62,10 @@ float expint(int n, float x);
 
 float sqrt_approx(float z);
 
+#define AE_RAND_MAX (32767)
+
+void ae_srand(unsigned int init);
+
+int ae_rand(void);
+
 #endif

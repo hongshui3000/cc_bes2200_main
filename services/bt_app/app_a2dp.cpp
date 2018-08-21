@@ -58,6 +58,12 @@ AvdtpContentProt a2dp_avdtpCp[BT_DEVICE_NUM];
 U8 a2dp_avdtpCp_securityData[AVDTP_MAX_CP_VALUE_SIZE]=
 {
 };
+#if defined(A2DP_AAC_ON)
+AvdtpContentProt a2dp_avdtpCp_aac[BT_DEVICE_NUM];
+U8 a2dp_avdtpCp_securityData_aac[AVDTP_MAX_CP_VALUE_SIZE]=
+{
+};
+#endif
 #endif
 
 extern void spp_callback(SppDev *locDev, SppCallbackParms *Info);
@@ -154,6 +160,9 @@ void a2dp_init(void)
     app_bt_device.a2dp_state[BT_DEVICE_ID_1]=0;
     app_bt_device.a2dp_play_pause_flag = 0;
     app_bt_device.curr_a2dp_stream_id= BT_DEVICE_ID_1;
+#ifdef __A2DP_AVDTP_CP__
+    app_bt_device.avdtp_cp=0;
+#endif
 }
 
 
@@ -1505,7 +1514,13 @@ if (tws_a2dp_callback(Stream, Info))
                     }
                 }
 #else
-                header_len = AVDTP_ParseMediaHeader(&header, Info->p.data);
+
+#ifdef __A2DP_AVDTP_CP__
+            header_len = AVDTP_ParseMediaHeader(&header, Info->p.data,app_bt_device.avdtp_cp);        
+#else
+            header_len = AVDTP_ParseMediaHeader(&header, Info->p.data,0);  
+#endif
+
 #if 1
 #ifdef __TWS__
             if(app_tws_get_mode()  != TWSSLAVE)
@@ -1626,6 +1641,9 @@ if (tws_a2dp_callback(Stream, Info))
             break;
         case A2DP_EVENT_STREAM_CLOSED:
             TRACE("::A2DP_EVENT_STREAM_CLOSED stream_id:%d, reason = %x\n", stream_id_flag.id,Info->discReason);
+#ifdef __A2DP_AVDTP_CP__
+            app_bt_device.avdtp_cp=0;
+#endif
 #ifdef __TWS__
             if (app_tws_get_mode() != TWSSLAVE)
 #endif            
@@ -1710,6 +1728,7 @@ if (tws_a2dp_callback(Stream, Info))
                 break;
             case A2DP_EVENT_STREAM_SECURITY_CNF:
                 TRACE("::A2DP_EVENT_STREAM_SECURITY_CNF %d\n", Info->event);
+                app_bt_device.avdtp_cp=1;
                 break;
 #endif
         case A2DP_EVENT_STREAM_RECONFIG_IND:

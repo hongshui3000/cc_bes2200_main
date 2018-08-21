@@ -13,11 +13,19 @@ typedef struct
     bool hpf_enabled;
     bool af_enabled;
     bool nlp_enabled;
+    bool ns_enabled;
+    bool cng_enabled;
+    // af config
     int blocks;
     int delay;
     // nlp config
     float min_ovrd;
     float target_supp;
+    // ns config
+    float noise_supp;
+    // cng config
+    int cng_type; // 0 - white noise, 1 - pink noise
+    float cng_level;
 } EcConfig;
 
 EcState *ec_init(int sample_rate, int frame_size, const EcConfig *config);

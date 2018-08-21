@@ -40,5 +40,8 @@ ifeq ($(VCRYSTAL_OFF),1)
 CFLAGS_pmu_best2000.o += -DVCRYSTAL_OFF
 endif
 
+ifeq ($(DAC_CLASSG_ENABLE),1)
+PMU_CFG_FLAGS += -DDAC_CLASSG_ENABLE
+endif
 
 

@@ -2046,19 +2046,22 @@ static void analog_aud_codec_config_speaker(void)
         ana_spk_enabled = en;
         if (en) {
             analog_aud_enable_dac_pa(CFG_HW_AUD_OUTPUT_PATH_SPEAKER_DEV);
-#if defined(AUDIO_OUTPUT_DC_CALIB_ANA)
             if (audio_output_diff) {
-                uint16_t val;
+#if defined(AUDIO_OUTPUT_DC_CALIB_ANA)
                 int ret;
                 ret = hal_codec_dac_reset_set();
+#endif
+                uint16_t val;
                 analog_read(ANA_REG_6E, &val);
                 val |= CFG_TX_EN_S2PA;
                 analog_write(ANA_REG_6E, val);
+#if defined(AUDIO_OUTPUT_DC_CALIB_ANA)
                 if (ret) {
                     hal_codec_dac_reset_clear();
                 }
-            }
 #endif
+            }
+
 #ifdef CFG_HW_AUD_OUTPUT_POP_SWITCH
             hal_sys_timer_delay_us(5);
             hal_gpio_pin_set(CFG_HW_AUD_OUTPUT_POP_SWITCH);
@@ -2100,13 +2103,15 @@ void analog_aud_codec_dac_enable(bool en)
         val = CFG_TX_EN_LPPA_DR | CFG_TX_EN_S1PA | CFG_TX_EN_S1PA_DR |
             CFG_TX_EN_S2PA_DR | CFG_TX_EN_S3PA | CFG_TX_EN_S3PA_DR |
             CFG_TX_EN_DACLDO | CFG_TX_EN_DACLDO_DR | CFG_TX_EN_VTOI | CFG_TX_EN_VTOI_DR;
-#if defined(AUDIO_OUTPUT_DC_CALIB_ANA)
+
         if (audio_output_diff) {
+#if defined(AUDIO_OUTPUT_DC_CALIB_ANA)
             val |= CFG_TX_EN_LPPA;
-        }
-#else
-        val |= CFG_TX_EN_S2PA;
 #endif
+        } else {
+            val |= CFG_TX_EN_S2PA;
+        }
+
         analog_write(ANA_REG_6E, val);
 
         if (audio_output_diff) {

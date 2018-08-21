@@ -96,6 +96,8 @@ void btdrv_enable_dma_lock_clk(void);
 void btdrv_detach_reset_status(void);
 void btdrv_set_slave_afh(void);
 void btdrv_clean_slave_afh(void);
+void btdrv_set_powerctrl_rssi_low(uint16_t rssi);
+void bt_drv_reg_op_ld_sniffer_env_monitored_dev_state_set(bool state);
 
 
 

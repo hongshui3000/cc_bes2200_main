@@ -2000,7 +2000,7 @@ U16 AVDTP_CreateMediaHeader(AvdtpMediaHeader *Header, U8 *Buffer);
  *
  *     The actual size of the media header.  
  */
-U16 AVDTP_ParseMediaHeader(AvdtpMediaHeader *Header, U8 *Buffer);
+U16 AVDTP_ParseMediaHeader(AvdtpMediaHeader *Header, U8 *Buffer, U8 avdtp_cp);
 
 typedef bool (*AvdtpCheck_aac_status)( BtRemoteDevice* remDev,AvdtpStream       *strm);
 

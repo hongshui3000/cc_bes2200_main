@@ -116,11 +116,11 @@ typedef struct {
 #if defined(__TWS_CLK_SYNC__)
     uint16_t enqueued_frame_num;
     uint16_t processed_frame_num;
-    uint16_t locked_frame_num;
-    uint32_t locked_native_clk;
-    uint32_t remote_locked_native_clk;
-    uint16_t locked_bit_cnt;
-    uint16_t remote_locked_bit_cnt;
+    uint16_t locked_frame_num;//record remote locked clk correspond frame num
+    uint32_t locked_native_clk;//dma locked local native clk
+    uint32_t remote_locked_native_clk;//remote dma locked native clk
+    uint16_t locked_bit_cnt;//dma locked local bitcnt
+    uint16_t remote_locked_bit_cnt;//remote dma locked bitcnt
 #endif
     void (*wait_space)(void *tws_buff);
     void (*put_space)(void *tws_buff);
@@ -156,7 +156,7 @@ typedef struct {
     volatile bool connected; //link with peer
     volatile bool counting;
     volatile bool locked; 
-    volatile bool blocked;
+    volatile bool blocked;    
 #if defined(TWS_RBCODEC_PLAYER) || defined(TWS_LINEIN_PLAYER)
     uint16_t stream_state;
     uint32_t stream_need_reconfig;
@@ -185,8 +185,6 @@ typedef struct {
     osThreadId decoder_tid;
     volatile bool  decoder_running;
     volatile bool  decoder_running_wait;
-
-    
     tws_mutex_t decoder_mutex;
     tws_mutex_t decoder_buffer_mutex;
     void (*lock_decoder_thread)(void *tws);
@@ -295,6 +293,9 @@ typedef struct {
 
     BLE_ADV_SCAN_FUNC scan_func;
     uint8_t bleReconnectPending;
+#ifdef _TWS_MASTER_DROP_DATA_    
+    uint8_t master_filter;
+#endif
     uint8_t tws_start_stream_pending;
     osTimerId master_ble_scan_timerId;
     osTimerId slave_delay_role_switch_timerId;
@@ -719,7 +720,7 @@ uint32_t tws_media_play_calc_ring_sync_trigger_time(void);
 #endif
 
 void app_tws_check_pcm_signal(void);
-void app_tws_set_trigger_time(uint32_t trigger_time);
+void app_tws_set_trigger_time(uint32_t trigger_time, bool play_only);
 
 
 int audout_pcmbuff_thres_monitor(void);

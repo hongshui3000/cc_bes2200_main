@@ -2363,6 +2363,29 @@ void af_codec_set_noise_reduction(bool enable)
     af_unlock_thread();
 }
 
+void af_codec_sync_config(enum AUD_STREAM_T stream, enum AF_CODEC_SYNC_TYPE_T type, bool enable)
+{
+#ifndef BEST1000
+    af_lock_thread();
+
+    if (stream == AUD_STREAM_PLAYBACK) {
+        if (enable) {
+            hal_codec_sync_dac_enable((enum HAL_CODEC_SYNC_TYPE_T)type);
+        } else {
+            hal_codec_sync_dac_disable();
+        }
+    } else {
+        if (enable) {
+            hal_codec_sync_adc_enable((enum HAL_CODEC_SYNC_TYPE_T)type);
+        } else {
+            hal_codec_sync_adc_disable();
+        }
+    }
+
+    af_unlock_thread();
+#endif
+}
+
 int af_anc_open(enum ANC_TYPE_T type, enum AUD_SAMPRATE_T play_rate, enum AUD_SAMPRATE_T capture_rate, AF_ANC_HANDLER handler)
 {
     enum AUD_STREAM_ID_T id;

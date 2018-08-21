@@ -1841,8 +1841,8 @@ U16 A2DP_CreateMediaHeader(AvdtpMediaHeader *Header, U8 *Buffer);
  *
  *     The actual size of the media header.  
  */
-U16 A2DP_ParseMediaHeader(AvdtpMediaHeader *Header, U8 *Buffer);
-#define A2DP_ParseMediaHeader(h, b) AVDTP_ParseMediaHeader(h, b)
+U16 A2DP_ParseMediaHeader(AvdtpMediaHeader *Header, U8 *Buffer ,U8 avdtp_cp);
+#define A2DP_ParseMediaHeader(h, b, a) AVDTP_ParseMediaHeader(h, b , a)
 
 /*---------------------------------------------------------------------------
  * A2DP_GetStreamState()

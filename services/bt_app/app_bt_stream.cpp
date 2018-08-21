@@ -164,7 +164,7 @@ void bt_sbc_player_retrigger(uint32_t trigger_time)
 //    af_stream_start(AUD_STREAM_ID_0, AUD_STREAM_PLAYBACK);
 
     af_stream_pause(AUD_STREAM_ID_0, AUD_STREAM_PLAYBACK);
-    app_tws_set_trigger_time(trigger_time);
+    app_tws_set_trigger_time(trigger_time, true);
     af_stream_restart(AUD_STREAM_ID_0, AUD_STREAM_PLAYBACK);
 }
 
@@ -177,7 +177,7 @@ void bt_sbc_player_restart(uint32_t trigger_time)
 //    af_stream_start(AUD_STREAM_ID_0, AUD_STREAM_PLAYBACK);
 
     af_stream_pause(AUD_STREAM_ID_0, AUD_STREAM_PLAYBACK);
-    app_tws_set_trigger_time(trigger_time);
+    app_tws_set_trigger_time(trigger_time, true);
     af_stream_restart(AUD_STREAM_ID_0, AUD_STREAM_PLAYBACK);
 }
 
@@ -369,15 +369,14 @@ uint32_t tws_audout_pcm_more_data(uint8_t * buf, uint32_t len)
         ret = 0;
     }else{
 
-        if(tws.paused == false){
-            audout_pcmbuff_thres_monitor();
-        }
 #if defined(__TWS_CLK_SYNC__)
         {
             uint32_t offset,intraslot_offset,calc_master_bit_cnt,calc_master_clk;
             int32_t diff;
-            intraslot_offset = btdrv_rf_bit_offset_get()&0x3FF;
-            offset = btdrv_syn_get_offset_ticks(btdrv_conhdl_to_linkid(app_tws_get_tws_conhdl()));
+            if(tws.tws_mode == TWSSLAVE){
+                intraslot_offset = btdrv_rf_bit_offset_get()&0x3FF;//bit offset between master and slave
+                offset = btdrv_syn_get_offset_ticks(btdrv_conhdl_to_linkid(app_tws_get_tws_conhdl()));//clk offset between master and slave
+            }
 #if defined(A2DP_AAC_DIRECT_TRANSFER)
             if(app_tws_get_codec_type() == AVDTP_CODEC_TYPE_MPEG2_4_AAC){
                 tws.pcmbuff.processed_frame_num += len/2048;
@@ -404,6 +403,9 @@ uint32_t tws_audout_pcm_more_data(uint8_t * buf, uint32_t len)
         bt_xtal_sync(BT_XTAL_SYNC_MODE_MUSIC);
 #endif
 #endif
+        if(tws.paused == false){
+            audout_pcmbuff_thres_monitor();
+        }
         ret = len;
     }
 #if 0    
@@ -748,7 +750,7 @@ int bt_sbc_player(enum PLAYER_OPER_T on, enum APP_SYSFREQ_FREQ_T freq,uint32_t t
         af_codec_tune_resample_rate(AUD_STREAM_PLAYBACK, 1);
 #endif
 
-        app_tws_set_trigger_time(trigger_ticks);
+        app_tws_set_trigger_time(trigger_ticks, true);
 #if defined(__TWS_CLK_SYNC__)
         btdrv_enable_dma_lock_clk();
 #endif
@@ -1512,7 +1514,7 @@ int bt_sco_player(bool on, enum APP_SYSFREQ_FREQ_T freq,uint32_t trigger_ticks)
         {
             btdrv_set_bt_pcm_triggler_delay(55);
         }
-        app_tws_set_trigger_time(trigger_ticks);
+        app_tws_set_trigger_time(trigger_ticks, false);
 
 #ifdef SPEECH_SPK_FIR_EQ
         uint8_t *fir_eq_buf = NULL;

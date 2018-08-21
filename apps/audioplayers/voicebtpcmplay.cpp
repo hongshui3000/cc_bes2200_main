@@ -2392,10 +2392,15 @@ int voicebtpcm_pcm_audio_init(void)
         .hpf_enabled = true,
         .af_enabled = true,
         .nlp_enabled = true,
+        .ns_enabled = true,
+        .cng_enabled = true,
         .blocks = 1,
         .delay = 0,
         .min_ovrd = 2,
-        .target_supp = -40
+        .target_supp = -40,
+        .noise_supp = -15,
+        .cng_type = 1,
+        .cng_level = -60,
     };
     ec2f_st = ec_init(tx_sample_rate, tx_frame_length, &ec2f_config);
 #endif

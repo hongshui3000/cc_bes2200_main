@@ -177,7 +177,7 @@ static void hal_codec_set_dig_dac_gain(int32_t gain);
 static void hal_codec_reg_update_delay(void)
 {
     for (int i = 0; i < 10; i++) {
-        asm volatile("nop");
+        hal_sys_timer_delay_us(2);
     }
 }
 
@@ -198,7 +198,9 @@ static void hal_codec_classg_enable(bool en)
         codec->REG32B_10 = SET_BITFIELD(codec->REG32B_10, CODEC_10_CLASSG_THD1, config->thd1);
         codec->REG32B_10 = SET_BITFIELD(codec->REG32B_10, CODEC_10_CLASSG_THD0, config->thd0);
 
-        codec->REG32B_11 = SET_BITFIELD(codec->REG32B_11, CODEC_11_CLASSG_WINDOW, config->wind_width);
+        // Make class-g set the lowest gain after several samples.
+        // Class-g gain will have impact on dc.
+        codec->REG32B_11 = SET_BITFIELD(codec->REG32B_11, CODEC_11_CLASSG_WINDOW, 6);
 
         if (config->lr)
             codec->REG32B_10 |= CODEC_10_CLASSG_LR;
@@ -216,6 +218,12 @@ static void hal_codec_classg_enable(bool en)
             codec->REG32B_10 &= ~CODEC_10_CLASSG_QUICK_DOWN;
 
         codec->REG32B_10 |= CODEC_10_CLASSG_EN;
+
+        // Restore class-g window after the gain has been updated
+        hal_codec_reg_update_delay();
+        codec->REG32B_11 = SET_BITFIELD(codec->REG32B_11, CODEC_11_CLASSG_WINDOW, config->wind_width);
+
+        
     } else {
         codec->REG32B_10 &= ~CODEC_10_CLASSG_EN;
     }
@@ -258,9 +266,8 @@ static int hal_codec_int_open(enum HAL_CODEC_OPEN_T type)
     }
 #endif
 
-#ifdef __AUDIO_RESAMPLE__
     bool first_open = !codec_init;
-#endif
+
 
     analog_aud_pll_open(ANA_AUD_PLL_USER_CODEC);
 
@@ -282,54 +289,54 @@ static int hal_codec_int_open(enum HAL_CODEC_OPEN_T type)
     hal_codec_reg_update_delay();
     codec->FIFO_FLUSH &= ~(CODEC_FIFO_FLUSH_TX_FIFO_FLUSH | CODEC_FIFO_FLUSH_RX_FIFO_FLUSH_ALL);
     codec->CONFIG |= CODEC_CFG_CODEC_IF_EN;
-
+    if (first_open)
+    {
 #ifdef AUDIO_ANC_FB_MC
-    codec->MC_CONFIG = MC_CONFIG_MC_DELAY(138) | MC_CONFIG_DMACTRL_MC;
+        codec->MC_CONFIG = MC_CONFIG_MC_DELAY(138) | MC_CONFIG_DMACTRL_MC;
 #endif
+        // ANC zero-crossing
+        codec->REG32B_07 |= CODEC_07_MUTE_GAIN_PASS0_CH0 | CODEC_07_MUTE_GAIN_PASS0_CH1;
 
-    // ANC zero-crossing
-    codec->REG32B_07 |= CODEC_07_MUTE_GAIN_PASS0_CH0 | CODEC_07_MUTE_GAIN_PASS0_CH1;
-
-    // Enable ADC zero-crossing gain adjustment
-    codec->REG32B_09 |= CODEC_09_ADC_GAIN_SEL;
+        // Enable ADC zero-crossing gain adjustment
+        codec->REG32B_09 |= CODEC_09_ADC_GAIN_SEL;
 
 #ifdef FIXED_CODEC_ADC_VOL
-    hal_codec_set_adc_gain_value(0xFF, CODEC_SADC_VOL);
+        hal_codec_set_adc_gain_value(0xFF, CODEC_SADC_VOL);
 #endif
 
 #ifdef AUDIO_OUTPUT_DC_CALIB
-    hal_codec_dac_dc_offset_enable();
+        hal_codec_dac_dc_offset_enable();
 #endif
 
 #ifdef AUDIO_OUTPUT_SW_GAIN
-    const struct CODEC_DAC_VOL_T *vol_tab_ptr;
+        const struct CODEC_DAC_VOL_T *vol_tab_ptr;
 
-    // Init gain settings
-    vol_tab_ptr = hal_codec_get_dac_volume(0);
-    if (vol_tab_ptr) {
+        // Init gain settings
+        vol_tab_ptr = hal_codec_get_dac_volume(0);
+        if (vol_tab_ptr) {
         analog_aud_set_dac_gain(vol_tab_ptr->tx_pa_gain);
         hal_codec_set_dig_dac_gain(ZERODB_DIG_DAC_DBVAL);
-    }
+        }
 #else
-    // Enable DAC zero-crossing gain adjustment
-    codec->REG32B_09 |= CODEC_09_DAC_GAIN_SEL;
+        // Enable DAC zero-crossing gain adjustment
+        codec->REG32B_09 |= CODEC_09_DAC_GAIN_SEL;
 #endif
 
 #ifdef __AUDIO_RESAMPLE__
-    if (first_open) {
-        static const struct HAL_CODEC_CONFIG_T cfg = {
-            .sample_rate = AUD_SAMPRATE_192000,
-            .set_flag = HAL_CODEC_CONFIG_SAMPLE_RATE,
-        };
 
-        // Init h/w resample memory
-        hal_codec_setup_stream(HAL_CODEC_ID_0, AUD_STREAM_PLAYBACK, &cfg);
+        // Init h/w resample memory by setting to 192K sample rate
+        codec->REG32B_10 = (codec->REG32B_10 & ~CODEC_10_RESAMPLE_441K) | CODEC_10_RESAMPLE_ENABLE | CODEC_10_RESAMPLE_DUAL_CH;
+        codec->REG32B_04 = SET_BITFIELD(codec->REG32B_04, CODEC_04_DAC_UP_SEL, 4);
+        codec->REG32B_04 = (codec->REG32B_04 & ~CODEC_04_DAC_HBF1_BYPASS) | CODEC_04_DAC_HBF2_BYPASS | CODEC_04_DAC_HBF3_BYPASS;
+
+
         codec->CONFIG &= ~CODEC_CFG_DAC_ENABLE;
         codec->REG32B_04 |= CODEC_04_DAC_EN | CODEC_04_DAC_EN_CH1 | CODEC_04_DAC_EN_CH0;
-        osDelay(2);
+        osDelay(3);
         codec->REG32B_04 &= ~(CODEC_04_DAC_EN | CODEC_04_DAC_EN_CH1 | CODEC_04_DAC_EN_CH0);
-    }
+
 #endif
+    }
 
     return 0;
 }
@@ -611,6 +618,13 @@ void hal_codec_start_playback_stream(enum HAL_CODEC_ID_T id)
     codec->REG32B_04 |= CODEC_04_DAC_EN;
 
 #if (defined(AUDIO_OUTPUT_DC_CALIB_ANA) || defined(AUDIO_OUTPUT_DC_CALIB)) && !defined(__TWS__)
+
+#ifdef AUDIO_OUTPUT_DC_CALIB
+    // At least delay 4ms for 8K-sample-rate mute data to arrive at DAC PA
+    osDelay(dac_delay_ms);
+#endif
+
+
 #if 0
     // At least delay 4ms for 8K-sample-rate mute data to arrive at DAC PA
     osDelay(5);
@@ -933,6 +947,10 @@ static int hal_codec_set_dac_hbf_bypass_cnt(uint32_t cnt)
 static int hal_codec_set_dac_up(uint32_t val)
 {
     uint32_t sel = 0;
+    uint32_t old_sel;
+
+    old_sel = GET_BITFIELD(codec->REG32B_04, CODEC_04_DAC_UP_SEL);
+
 
     if (val == 2) {
         sel = 0;
@@ -948,6 +966,24 @@ static int hal_codec_set_dac_up(uint32_t val)
         ASSERT(false, "%s: Invalid dac up: %u", __FUNCTION__, val);
     }
     codec->REG32B_04 = SET_BITFIELD(codec->REG32B_04, CODEC_04_DAC_UP_SEL, sel);
+
+    if (old_sel != sel) {
+#ifdef AUDIO_OUTPUT_DC_CALIB
+#ifdef ANC_APP
+        // Fortunately, ANC requires sample rate >= 44100, which means val == 1 always.
+        // So there is no need to reset DAC or considering side effects of DAC reset.
+#else
+        // Reset 3/6 down SINC filter after changing dac_up.
+        // On best2000, dc calib is in front of SINC filter. Once dac_up is changed,
+        // non-zero dc calib values will make SINC filter outputing data with wrong dc.
+        codec->CMU_CTRL2 &= ~CODEC_CMU2_SOFT_RSTN_DAC;
+        codec->CMU_CTRL2 |= CODEC_CMU2_SOFT_RSTN_DAC;
+#endif
+#endif
+    }
+
+
+    
     return 0;
 }
 
@@ -1667,7 +1703,17 @@ void hal_codec_sync_dac_enable(enum HAL_CODEC_SYNC_TYPE_T type)
 
 void hal_codec_sync_dac_disable(void)
 {
-    codec->SYNC_PLAY = SET_BITFIELD((codec->SYNC_PLAY & ~SYNC_STAMP_CLR_USED), SYNC_CODEC_DAC_ENABLE_SEL, 0);
+    codec->SYNC_PLAY = SET_BITFIELD(codec->SYNC_PLAY, SYNC_CODEC_DAC_ENABLE_SEL, HAL_CODEC_SYNC_TYPE_NONE);
+}
+
+void hal_codec_sync_adc_enable(enum HAL_CODEC_SYNC_TYPE_T type)
+{
+    codec->SYNC_PLAY = SET_BITFIELD(codec->SYNC_PLAY, SYNC_CODEC_ADC_ENABLE_SEL, type) | SYNC_STAMP_CLR_USED;
+}
+
+void hal_codec_sync_adc_disable(void)
+{
+    codec->SYNC_PLAY = SET_BITFIELD(codec->SYNC_PLAY, SYNC_CODEC_ADC_ENABLE_SEL, HAL_CODEC_SYNC_TYPE_NONE);
 }
 
 int hal_codec_dac_reset_set(void)

@@ -54,6 +54,15 @@ void af_codec_tune_resample_rate(enum AUD_STREAM_T stream, float factor);
 void af_codec_set_perf_test_power(int type);
 void af_codec_set_noise_reduction(bool enable);
 
+enum AF_CODEC_SYNC_TYPE_T {
+    AF_CODEC_SYNC_TYPE_NONE,
+    AF_CODEC_SYNC_TYPE_GPIO,
+    AF_CODEC_SYNC_TYPE_BT,
+    AF_CODEC_SYNC_TYPE_WIFI,
+};
+
+void af_codec_sync_config(enum AUD_STREAM_T stream, enum AF_CODEC_SYNC_TYPE_T type, bool enable);
+
 typedef void (*AF_ANC_HANDLER)(enum AUD_STREAM_T stream, enum AUD_SAMPRATE_T rate);
 
 int af_anc_open(enum ANC_TYPE_T type, enum AUD_SAMPRATE_T play_rate, enum AUD_SAMPRATE_T capture_rate, AF_ANC_HANDLER handler);

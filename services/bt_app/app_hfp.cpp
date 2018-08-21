@@ -637,7 +637,7 @@ void hfp_callback(HfChannel *Chan, HfCallbackParms *Info)
                 app_hfp_hfcommand_mempool_free(hf_cmd_p);
         }
 
-#if defined(SPEECH_TX_NS) || defined(SPEECH_TX_AEC) || defined(SPEECH_TX_AEC2FLOAT)
+#if defined(HFP_DISABLE_NREC)
         app_hfp_hfcommand_mempool_calloc(&hf_cmd_p);        
         if (hf_cmd_p){
             if(HF_DisableNREC(Chan,hf_cmd_p) != BT_STATUS_PENDING)                
@@ -851,10 +851,7 @@ void hfp_callback(HfChannel *Chan, HfCallbackParms *Info)
 #endif
         break;
     case HF_EVENT_AUDIO_CONNECTED:
-         if(hal_get_chip_metal_id()>=HAL_CHIP_METAL_ID_2)
-         {
-            *(volatile uint16_t*)(0xc0003bec) = 0xffff;         //rssi low
-         }		
+	 btdrv_set_powerctrl_rssi_low(0xffff);
         if(Info->status == BT_STATUS_SUCCESS){	
 #if defined(HFP_1_6_ENABLE)            
             TRACE("::HF_EVENT_AUDIO_CONNECTED  chan_id:%d, codec_id %d\n", chan_id_flag.id, app_bt_device.hf_channel[chan_id_flag.id].negotiated_codec);

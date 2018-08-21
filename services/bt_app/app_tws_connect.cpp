@@ -428,6 +428,9 @@ void app_tws_ble_reconnect_init(void)
     app_tws_ble_reconnect.adv_close_func = app_tws_slave_ble_close_adv_process;
     app_tws_ble_reconnect.bleReconnectPending = 0;
     app_tws_ble_reconnect.tws_start_stream_pending = 0;
+#ifdef _TWS_MASTER_DROP_DATA_
+    app_tws_ble_reconnect.master_filter = 0;
+#endif
 
     app_tws_ble_reconnect.master_ble_scan_timerId = osTimerCreate(osTimer(master_ble_scan_timer), osTimerOnce, (void *)0); 
     app_tws_ble_reconnect.slave_delay_role_switch_timerId = osTimerCreate(osTimer(slave_delay_role_switch_timer), osTimerOnce, (void *)0); 
@@ -781,6 +784,9 @@ void a2dp_callback_tws_source(A2dpStream *Stream, const A2dpCallbackParms *Info)
                         uint8_t status;
                         //tws_start_stream_pending = 1; 
                         app_tws_ble_reconnect.tws_start_stream_pending = 1;
+#ifdef _TWS_MASTER_DROP_DATA_
+                        app_tws_ble_reconnect.master_filter=1;
+#endif
                         TRACE("1,start tws stream!");
                         app_tws_check_max_slot_setting();
                         status = A2DP_StartStream(tws.tws_source.stream);
@@ -1118,7 +1124,10 @@ void a2dp_callback_tws_source(A2dpStream *Stream, const A2dpCallbackParms *Info)
 #ifdef __TWS_RECONNECT_USE_BLE__
             if (app_bt_device.a2dp_streamming[0] == 1) {
                 uint8_t status;
-                app_tws_ble_reconnect.tws_start_stream_pending = 1; 
+                app_tws_ble_reconnect.tws_start_stream_pending = 1;
+#ifdef _TWS_MASTER_DROP_DATA_
+                app_tws_ble_reconnect.master_filter=1;
+#endif
                 app_tws_check_max_slot_setting();
                 status = A2DP_StartStream(tws.tws_source.stream);
                 if(status == BT_STATUS_PENDING)
@@ -1358,6 +1367,7 @@ int app_tws_slave_a2dp_callback(A2dpStream *Stream, const A2dpCallbackParms *Inf
             }            
 #ifdef __TWS_CALL_DUAL_CHANNEL__
             slave_sco_active = 0;    
+            bt_drv_reg_op_ld_sniffer_env_monitored_dev_state_set(0);
             if(bt_media_is_media_active_by_type(BT_STREAM_VOICE))
             {
                 app_audio_manager_sendrequest(APP_BT_STREAM_MANAGER_STOP,BT_STREAM_VOICE,BT_DEVICE_ID_1,MAX_RECORD_NUM,0,0);
@@ -1615,10 +1625,7 @@ int app_tws_master_a2dp_callback_from_mobile(A2dpStream *Stream, const A2dpCallb
             TRACE("conhdl=%x\n",tws.mobile_conhdl);
             app_bt_hcireceived_data_clear(tws.mobile_conhdl);
             HciBypassProcessReceivedDataExt(NULL);
-            if(hal_get_chip_metal_id()>=HAL_CHIP_METAL_ID_2)
-            {
-                *(volatile uint16_t*)(0xc0003bec) = 0;         //rssi low
-            }
+            btdrv_set_powerctrl_rssi_low(0);
             
             // A2DP_CloseStream(twsd->tws_sink.stream);
             restore_mobile_channels();
@@ -1664,10 +1671,7 @@ int app_tws_master_a2dp_callback_from_mobile(A2dpStream *Stream, const A2dpCallb
             break;
         case A2DP_EVENT_STREAM_START_IND:
             TRACE("%s,A2DP_EVENT_STREAM_START_IND twsmode = %d",__FUNCTION__,tws.tws_mode);
-            if(hal_get_chip_metal_id()>=HAL_CHIP_METAL_ID_2)
-            {
-                *(volatile uint16_t*)(0xc0003bec) = 0xffff;         //rssi low
-            }
+            btdrv_set_powerctrl_rssi_low(0xffff);
             
             if(tws.tws_mode == TWSMASTER ||tws.tws_mode == TWSON)
             {
@@ -1812,13 +1816,23 @@ int app_tws_master_a2dp_callback_from_mobile(A2dpStream *Stream, const A2dpCallb
                     unsigned char * sbc_buffer = NULL;
                     
                     TWSCON_DBLOG("\n%s %d  is first data from mobile\n",__FUNCTION__,__LINE__);
-                    header_len = AVDTP_ParseMediaHeader(&media_header, Info->p.data);        
+#ifdef __A2DP_AVDTP_CP__
+                    header_len = AVDTP_ParseMediaHeader(&media_header, Info->p.data,app_bt_device.avdtp_cp);        
+#else
+                    header_len = AVDTP_ParseMediaHeader(&media_header, Info->p.data,0);  
+#endif
                     app_tws_start_master_player(Stream);
                     tws.pause_packets = 0;
                     sbc_buffer = (unsigned char *)Info->p.data + header_len;
                     sbc_packet_len = Info->len - header_len - 1;
                     frameNum = *(sbc_buffer);
-                                    
+                    //TRACE("@%x %x %x %x",*(sbc_buffer),*(sbc_buffer+1),*(sbc_buffer+2),*(sbc_buffer+3));
+                    if(0==frameNum)
+                    {
+                        TRACE("@@@##########framenum:%d header_len:%d",frameNum,header_len);
+                        nRet=1;
+                        return nRet;
+                    }
                     sbc_frame_info.frameLen = sbc_packet_len/frameNum;
                     sbc_frame_info.frameNum = frameNum;
                 }

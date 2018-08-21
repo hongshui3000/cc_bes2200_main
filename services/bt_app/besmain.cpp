@@ -301,12 +301,11 @@ int besmain(void)
 #ifndef __BT_ONE_BRING_TWO__
 #ifdef __A2DP_AVDTP_CP__
     //TRACE("##a2dp_avdtpCp:%x",a2dp_avdtpCp);
-    a2dp_avdtpCp[0].cpType = AVDTP_CP_TYPE_SCMS_T;
-    a2dp_avdtpCp[0].data = (U8 *)&a2dp_avdtpCp_securityData;
-    a2dp_avdtpCp[0].dataLen = 1;
-    A2DP_Register(&app_bt_device.a2dp_aac_stream, &a2dp_aac_avdtpcodec, &a2dp_avdtpCp[0], a2dp_callback);
-    //A2DP_AddContentProtection(&app_bt_device.a2dp_aac_stream, &a2dp_avdtpCp[0]);
-    A2DP_AddContentProtection(&app_bt_device.a2dp_stream[0], &a2dp_avdtpCp[0]);
+    a2dp_avdtpCp_aac[0].cpType = AVDTP_CP_TYPE_SCMS_T;
+    a2dp_avdtpCp_aac[0].data = (U8 *)&a2dp_avdtpCp_securityData_aac;
+    a2dp_avdtpCp_aac[0].dataLen = 1;
+    A2DP_Register(&app_bt_device.a2dp_aac_stream, &a2dp_aac_avdtpcodec, &a2dp_avdtpCp_aac[0], a2dp_callback);
+    A2DP_AddContentProtection(&app_bt_device.a2dp_aac_stream, &a2dp_avdtpCp_aac[0]);
 #else
      A2DP_Register(&app_bt_device.a2dp_aac_stream, &a2dp_aac_avdtpcodec, NULL, a2dp_callback);
 #endif 

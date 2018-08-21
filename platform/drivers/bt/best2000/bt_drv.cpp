@@ -866,3 +866,43 @@ void btdrv_clean_slave_afh(void)
     *(unsigned int *)0xc0004c18 = 0;
 }
 
+
+void btdrv_set_powerctrl_rssi_low(uint16_t rssi)
+{
+	if(hal_get_chip_metal_id()>=2)    
+	{
+		*(volatile uint16_t*)(0xc0003bec) = rssi;         //rssi low
+	}
+}
+
+
+#define SNIFF_IN_SCO    2
+
+void bt_drv_reg_op_ld_sniffer_env_monitored_dev_state_set(bool state)
+{
+    uint8_t val = *(volatile uint8_t *)0xc0004bfe;
+
+    if (state){        
+        val |= (uint8_t)(SNIFF_IN_SCO);
+    }else{
+        val &= (uint8_t)(~SNIFF_IN_SCO);
+    }
+    *(volatile uint8_t *)0xc0004bfe = val;
+}
+
+
+bool bt_drv_reg_op_ld_sniffer_env_monitored_dev_state_get(void)
+{
+    uint8_t val = *(volatile uint8_t *)0xc0004bfe;
+
+    bool nRet = false;
+    
+    if (val & SNIFF_IN_SCO){
+        nRet = true;
+    }else{
+        nRet = false;
+    }
+    TRACE("monitored_dev_state %d", nRet);
+
+    return nRet;
+}

@@ -1,5 +1,8 @@
 #include "cmsis.h"
 #include "cmsis_nvic.h"
+#ifdef RTOS
+#include "cmsis_os.h"
+#endif
 #include "pmu.h"
 #include "hal_timer.h"
 #include "hal_trace.h"
@@ -16,6 +19,7 @@
 #define IO_VOLT_ACTIVE_NORMAL           PMU_IO_2_6V
 #endif
 #define IO_VOLT_ACTIVE_RISE             PMU_IO_2_6V
+//modify by ATX
 #ifdef __VIO_VOLT_FORCE_SET_TO_2_6V_DURING_SLEEP_
 #define IO_VOLT_SLEEP                   PMU_IO_2_6V
 #else
@@ -1651,18 +1655,13 @@ void pmu_codec_hppa_enable(int enable)
 {
     enum HAL_CHIP_METAL_ID_T metal_id;
     uint16_t val;
+    uint32_t hppa_volt;
 
     metal_id = hal_get_chip_metal_id();
 
     if (enable) {
         if (audio_output_diff) {
-            if (metal_id >= HAL_CHIP_METAL_ID_2) {
-                val = 0xE000;
-            } else {
-                val = 0x6000;
-            }
-            pmu_write(PMU_REG_HPPA_CFG, val);
-            pmu_write(PMU_REG_HPPA_FREQ, 0x4819);
+            pmu_write(PMU_REG_HPPA_FREQ, 0x4859);
             if (vcodec_mv == 1500) {
                 // 1.6v DCDC_HPPA
                 val = 0xC010;
@@ -1682,24 +1681,49 @@ void pmu_codec_hppa_enable(int enable)
                 ASSERT(false, "Invalid vcodec volt: %u", vcodec_mv);
             }
             pmu_write(PMU_REG_HPPA_BUCK1, val);
+            if (metal_id >= HAL_CHIP_METAL_ID_2) {
+                val = 0xE000;
+            } else {
+                val = 0x6000;
+            }
+            pmu_write(PMU_REG_HPPA_CFG, val);
         } else {
+            pmu_write(PMU_REG_CP_PU, 0xFF40);
+            pmu_write(PMU_REG_HPPA_FREQ, 0x6060);
+            pmu_write(PMU_REG_HPPA_BUCK0, 0xC000);
+            // Set HPPA volt to lowest to reduce the pop when enabling HPPA
+            pmu_write(PMU_REG_HPPA_BUCK1, 0xC030);
+            pmu_write(PMU_REG_HPPA_BUCK2, 0xFD00);
+            pmu_write(PMU_REG_HPPA_BUCK3, 0xDF20);
+            pmu_write(PMU_REG_HPPA_BUCK4, 0xC100);
+            pmu_write(PMU_REG_HPPA_BUCK5, 0xDF20);
             if (metal_id >= HAL_CHIP_METAL_ID_2) {
                 val = 0xE440;
             } else {
                 val = 0x6440;
             }
             pmu_write(PMU_REG_HPPA_CFG, val);
-            pmu_write(PMU_REG_HPPA_FREQ, 0x6020);
-            pmu_write(PMU_REG_CP_PU, 0xFF40);
-            pmu_write(PMU_REG_HPPA_BUCK0, 0xC000);
-//            reg hppa classg step = 1 //buck always on
-//        2018/02/10 by ghyang 0xDF20->0xDF30
-//            pmu_write(PMU_REG_HPPA_BUCK1, 0xDF20);
-            pmu_write(PMU_REG_HPPA_BUCK1, 0xC730);
-            pmu_write(PMU_REG_HPPA_BUCK2, 0xFD00);
-            pmu_write(PMU_REG_HPPA_BUCK3, 0xDF20);
-            pmu_write(PMU_REG_HPPA_BUCK4, 0xC100);
-            pmu_write(PMU_REG_HPPA_BUCK5, 0xDF20);
+            osDelay(2);
+            // Ramp up HPPA volt to normal
+            val = 0xC030;
+            
+#ifdef DAC_CLASSG_ENABLE
+            hppa_volt = 0x1F;
+#else
+            hppa_volt = 7;
+#endif
+            for (uint32_t i = 1; i <= hppa_volt; i++) {
+                val = (val & ~(0x1F << 8)) | (i << 8);
+                pmu_write(PMU_REG_HPPA_BUCK1, val);
+                hal_sys_timer_delay_us(20);
+            }
+#ifdef DAC_CLASSG_ENABLE
+            // Clear hppa volt dr
+            pmu_read(PMU_REG_HPPA_BUCK1, &val);
+            val &= ~(1 << 4);
+            pmu_write(PMU_REG_HPPA_BUCK1, val);
+#endif
+            
         }
     } else {
         if (metal_id >= HAL_CHIP_METAL_ID_2) {
@@ -1713,6 +1737,7 @@ void pmu_codec_hppa_enable(int enable)
         }
     }
 }
+
 
 void pmu_codec_mic_bias_enable(uint32_t map)
 {

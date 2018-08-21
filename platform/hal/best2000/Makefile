@@ -49,3 +49,7 @@ ifeq ($(JTAG_WIFI),1)
 CFLAGS_hal_psc_best2000.o += -DJTAG_WIFI
 endif
 
+ifeq ($(AUDIO_OUTPUT_DIFF),1)
+CODEC_CFG_FLAGS += -DAUDIO_OUTPUT_DIFF
+endif
+

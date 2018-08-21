@@ -106,6 +106,8 @@ void hal_codec_set_dac_dc_gain_attn(float attn);
 void hal_codec_set_dac_dc_offset(int16_t dc_l, int16_t dc_r);
 void hal_codec_sync_dac_enable(enum HAL_CODEC_SYNC_TYPE_T type);
 void hal_codec_sync_dac_disable(void);
+void hal_codec_sync_adc_enable(enum HAL_CODEC_SYNC_TYPE_T type);
+void hal_codec_sync_adc_disable(void);
 int hal_codec_dac_reset_set(void);
 int hal_codec_dac_reset_clear(void);
 void hal_codec_tune_resample_rate(enum AUD_STREAM_T stream, float factor);

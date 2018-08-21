@@ -1337,7 +1337,7 @@ int app_init(void)
     app_bt_init();
 #ifdef __TWS_RECONNECT_USE_BLE__
     app_tws_ble_reconnect_init();
-    app_tws_delay_count=400;
+    app_tws_delay_count=15;
 #endif
     
     af_open();

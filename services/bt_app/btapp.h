@@ -194,6 +194,10 @@ enum BT_DEVICE_ID_T{
 #ifdef __A2DP_AVDTP_CP__
 extern AvdtpContentProt a2dp_avdtpCp[BT_DEVICE_NUM];
 extern U8 a2dp_avdtpCp_securityData[AVDTP_MAX_CP_VALUE_SIZE];
+#if defined(A2DP_AAC_ON)
+extern AvdtpContentProt a2dp_avdtpCp_aac[BT_DEVICE_NUM];
+extern U8 a2dp_avdtpCp_securityData_aac[AVDTP_MAX_CP_VALUE_SIZE];
+#endif
 #endif
 
 //Modified by ATX : Leon.He_20180622: add define for aac white list
@@ -219,6 +223,9 @@ struct BT_DEVICE_T{
 #endif
 #if defined(A2DP_AAC_ON)
     A2dpStream a2dp_aac_stream;
+#endif
+#ifdef __A2DP_AVDTP_CP__
+    uint8_t avdtp_cp;
 #endif
     uint8_t a2dp_codec_elements[BT_DEVICE_NUM][10];
 
