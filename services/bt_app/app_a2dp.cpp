@@ -1932,8 +1932,10 @@ bool avdtp_Get_aacEnable_Flag( BtRemoteDevice* remDev, AvdtpStream *strm)
 		return true;
 	if(true == check_aac_flag_for_iphone())
 		return true;
+#ifndef __DISABLE_MEIZU_AAC__ 
 	if(true == check_aac_flag_for_meizu())
 		return true;
+#endif
 	if(true == check_aac_flag_for_misc_phone())
 		return true;
 	if(true == check_aac_flag_for_brcm_chip_series())
