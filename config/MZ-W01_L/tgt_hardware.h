@@ -120,7 +120,7 @@ extern uint8_t bt_addr[6];
 #define ANALOG_ADC_GAIN2    0x4
 
 #define LC_MMSE_NOISE_SUPPRESS_LEVEL (-12)
-#define CODEC_SADC_VOL (8)
+#define CODEC_SADC_VOL (12)
 
 #define ZERODB_DIG_DAC_REGVAL (21)
 

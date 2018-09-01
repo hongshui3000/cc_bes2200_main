@@ -220,7 +220,7 @@ const CompexpConfig speech_tx_compexp_cfg = {
     .expand_slope = -0.5f,
     .attack_time = 0.01f,
     .release_time = 0.1f,
-    .makeup_gain = 6,
+    .makeup_gain = 9,
     .delay = 128,
 };
 #endif
@@ -263,19 +263,18 @@ const EqConfigRaw speech_tx_eq_cfg_8k = {
     .gain = -4.0049f,
     .num = 3,
     .param = {
-        {0.1038f, -0.3604f, 1.0000f, 0.0000f, -1.0000f},
-        {-0.2644f, -0.6014f, 1.0000f, 0.0000f, -1.0000f},
-        {-1.9679f, 0.9682f, 1.0000f, -2.0000f, 1.0000f},
+        {-1.854499f, 0.877615f, 0.933028f, -1.866057f, 0.933028f},  // 200HZ HP Q:1.2
+        {-0.939629f, 0.328836f, 1.000000f, -0.939629f, 0.328836f},	// default setting
+        {0.939629f, 0.328836f, 1.000000f, 0.939629f, 0.328836f},	// default setting
     },
 };
 // A Weighting 16k
 const EqConfigRaw speech_tx_eq_cfg_16k = {
     .gain = -5.4899f,
-    .num = 3,
+    .num = 2,
     .param = {
-        {0.8216f, 0.1687f, 1.0000f, 2.0000f, 1.0000f},
-        {-1.7055f, 0.7160f, 1.0000f, -2.0000f, 1.0000f},
-        {-1.9839f, 0.9840f, 1.0000f, -2.0000f, 1.0000f},
+        { -1.893409f, 0.906625f, 0.950009f, -1.900017f, 0.950009f},// 300HZ HP Q:1.2
+        {-0.593919f, 0.551986f, 1.174340f, -0.593919f, 0.377646f},// 3000HZ PP 5db Q:1.2
     },
 };
 #endif
