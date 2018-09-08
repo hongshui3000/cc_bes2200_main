@@ -23,8 +23,8 @@ typedef struct
     int     shwNlpResdPowAlph;
     int     shwNlpResdPowThd;
     int     shwNlpSmoothGainDod;
-    int     shwNlpBandSortIdx;
-    int     shwNlpBandSortIdxLow;
+    float   shwNlpBandSortIdx;
+    float   shwNlpBandSortIdxLow;
     int     shwNlpTargetSupp;
     int     shwNlpMinOvrd;
     int     shwNlpOvrdHigh;

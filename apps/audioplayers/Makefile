@@ -38,6 +38,7 @@ ccflags-y := \
 	-Iservices/multimedia/speech/process/speech_drc/include \
 	-Iservices/multimedia/speech/process/far_field_speech_enhancement/include \
 	-Iservices/multimedia/speech/process/plc/include \
+	-Iservices/multimedia/speech/process/speech_aec2/include \
 	-Iservices/multimedia/speech/process/ec2_float/include \
 	-Iservices/multimedia/speech/process/iir_resample/include \
 	-Iservices/multimedia/speech/process/speech_eq/include \

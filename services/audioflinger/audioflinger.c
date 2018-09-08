@@ -105,9 +105,9 @@ enum AF_PP_T{
     (v == PP_PING? PP_PANG: PP_PING)
 
 #if defined(SPEECH_CAPTURE_TWO_CHANNEL) || defined(SPEECH_TX_AEC2FLOAT)
-#define AF_STACK_SIZE (4096)
+#define AF_STACK_SIZE (8096)
 #else
-#define AF_STACK_SIZE (2048)
+#define AF_STACK_SIZE (8096)
 #endif
 
 #define AUDIO_BUFFER_COUNT (4)

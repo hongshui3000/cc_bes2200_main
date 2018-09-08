@@ -387,6 +387,7 @@ SECTIONS
 			*:lc_mmse_ns.o(.text.lc_mmse_ns_analysis)
 			*:lc_mmse_ns.o(.text.lc_mmse_ns_run)
 #endif
+#if defined(SPEECH_TX_AEC2FLOAT)
 			*:coherence.o(.text*)
 			*:echo_canceller.o(.text*)
 			*:echo_suppression(.text*)
@@ -394,6 +395,19 @@ SECTIONS
 			*:integer_delay.o(.text*)
 			*:mdf2.o(.text*)
 			*:ringbuf.o(.text*)
+#endif
+			*:med_aec_main.o(.text*)
+			*:med_aec_delay.o(.text*)
+			*:med_aec_hpf.o(.text*)
+			*:med_aec_hf_af.o(.text*)
+			*:med_aec_hf_nlp.o(.text*)
+			*:med_kissfft.o(.text*)
+			*:codec_op_cpx.o(.text*)
+			*:codec_op_etsi.o(.text*)
+			*:codec_op_float.o(.text*)
+			*:codec_op_lib.o(.text*)
+			*:codec_op_nesti.o(.text*)
+			*:codec_op_vec.o(.text*)
 			*(.overlay_text0)
 			. = ALIGN(4);
 		}
@@ -557,6 +571,18 @@ SECTIONS
 			*:arm_common_tables.o(.rodata.armBitRevIndexTable128)
 			*:arm_common_tables.o(.rodata.twiddleCoef_128)
 			*:arm_common_tables.o(.rodata.twiddleCoef_rfft_256)
+			*:med_aec_main.o(.data* .rodata*)
+			*:med_aec_delay.o(.data* .rodata*)
+			*:med_aec_hpf.o(.data* .rodata*)
+			*:med_aec_hf_af.o(.data* .rodata*)
+			*:med_aec_hf_nlp.o(.data* .rodata*)
+			*:med_kissfft.o(.data* .rodata*)
+			*:codec_op_cpx.o(.data* .rodata*)
+			*:codec_op_etsi.o(.data* .rodata*)
+			*:codec_op_float.o(.data* .rodata*)
+			*:codec_op_lib.o(.data* .rodata*)
+			*:codec_op_nesti.o(.data* .rodata*)
+			*:codec_op_vec.o(.data* .rodata*)
 			*(.overlay_data0 .overlay_rodata0)
 			. = ALIGN(4);
 		}
@@ -664,6 +690,7 @@ SECTIONS
 	} > RAM
 
 	ASSERT(__dummy_overlay_data_end__ - __overlay_data_start__ <= OVERLAY_DATA_SECTION_SIZE, "overlay sections too large")
+	__free_overlay_data = OVERLAY_DATA_SECTION_SIZE - (__dummy_overlay_data_end__ - __overlay_data_start__);
 
 	.text (FLASH_TO_FLASHX(__load_stop_overlay_data_end)) : AT (FLASHX_TO_FLASH(ADDR(.text)))
 	{

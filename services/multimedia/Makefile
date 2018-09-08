@@ -35,7 +35,9 @@ obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/lc_mmse_ns
 obj_cpp += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/lc_mmse_ns/src/*.cpp))
 
 # ec2 float
+ifeq ($(SPEECH_TX_AEC2FLOAT),1)
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/ec2_float/src/*.c))
+endif
 
 # speech resample
 obj_c += $(patsubst $(cur_dir)%,%,$(wildcard $(cur_dir)speech/process/iir_resample/src/*.c))
@@ -234,7 +236,7 @@ ccflags-y += -DUSE_MED_MALLOC -DUSE_CMSIS_F32_FFT
 ccflags-y += -DUSE_MED_MALLOC -D__ARMEL__ -DUSE_FFTWRAP -DWEBRTC_ARCH_ARM_V7
 
 
-ccflags-y += -DFLAC__INTEGER_ONLY_LIBRARY -DVERSION="\"1.3.1\"" -DHAVE_CONFIG_H
+ccflags-y += -DFLAC__INTEGER_ONLY_LIBRARY -DVERSION="\"1.3.1\"" -DHAVE_CONFIG_H -O2
 
 ifeq ($(RESAMPLE_ANY_SAMPLE_RATE),1)
 CFLAGS_audio_resample_ex.o += -DRESAMPLE_ANY_SAMPLE_RATE
