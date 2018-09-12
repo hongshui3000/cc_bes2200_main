@@ -151,7 +151,8 @@ static short *e_buf;
 #endif
 
 #if defined(SPEECH_TX_AEC2)
-#include "bt_sco_chain_echo_suppress.h"
+#include "speech_aec2.h"
+static SPEECH_AEC2_STATE_T *speech_tx_ec2_st = NULL;
 #endif
 
 #if defined(SPEECH_TX_AEC2FLOAT)
@@ -220,7 +221,7 @@ const CompexpConfig speech_tx_compexp_cfg = {
     .expand_slope = -0.5f,
     .attack_time = 0.01f,
     .release_time = 0.1f,
-    .makeup_gain = 9,
+    .makeup_gain = 12,
     .delay = 128,
 };
 #endif
@@ -1900,7 +1901,7 @@ uint32_t voicebtpcm_pcm_audio_data_come(uint8_t *buf, uint32_t len)
 #endif
 
 #ifdef SPEECH_TX_AEC2
-    bt_sco_chain_echo_suppress_sendchain(pcm_buf, echo_buf, pcm_len);
+    speech_aec2_process(speech_tx_ec2_st, pcm_buf, echo_buf, pcm_len);
 #endif
 
 #ifdef SPEECH_TX_AEC2FLOAT
@@ -2383,7 +2384,29 @@ int voicebtpcm_pcm_audio_init(void)
 #endif
 
 #ifdef SPEECH_TX_AEC2
-    bt_sco_chain_echo_suppress_init(tx_sample_rate);
+    SPEECH_AEC2_CFG_T speech_tx_ec2_cfg;
+
+    speech_tx_ec2_cfg.enEAecEnable = 1;
+    speech_tx_ec2_cfg.enHpfEnable = 1;
+    speech_tx_ec2_cfg.enAfEnable = 1;//adaptive filter
+    speech_tx_ec2_cfg.enNsEnable = 0;
+    speech_tx_ec2_cfg.enNlpEnable = 1;//nonlinear
+    speech_tx_ec2_cfg.enCngEnable = 0;
+    speech_tx_ec2_cfg.shwDelayLength = 60;
+    speech_tx_ec2_cfg.shwNlpRefCnt = 100;
+    speech_tx_ec2_cfg.shwNlpRefAmp1 = 100;
+    speech_tx_ec2_cfg.shwNlpExOverdrive = (6<<10);
+    speech_tx_ec2_cfg.shwNlpResdPowAlph = (int16_t)(0.1*32768);
+    speech_tx_ec2_cfg.shwNlpSmoothGainDod = 0; //(6 << 10);
+    speech_tx_ec2_cfg.shwNlpResdPowThd = 100;
+    speech_tx_ec2_cfg.shwNlpBandSortIdx = 0.75f;
+    speech_tx_ec2_cfg.shwNlpBandSortIdxLow = 0.5f;
+    speech_tx_ec2_cfg.shwNlpTargetSupp = (3<<10);
+    speech_tx_ec2_cfg.shwNlpMinOvrd = (1<<11);
+    speech_tx_ec2_cfg.shwNlpOvrdHigh = 31130; //(int16_t)(0.95 * 32768);
+    speech_tx_ec2_cfg.shwNlpOvrdLow = 29490; //(int16_t)(0.9 * 32768);
+
+    speech_tx_ec2_st = speech_aec2_create(&speech_tx_ec2_cfg, tx_sample_rate, tx_frame_length);
 #endif
 
 #ifdef SPEECH_TX_AEC2FLOAT
@@ -2405,7 +2428,7 @@ int voicebtpcm_pcm_audio_init(void)
 #endif
 
 #if defined(SPEECH_TX_NS2)
-    speech_tx_ns2_st = lc_mmse_ns_init(tx_sample_rate, tx_frame_length, -15);
+    speech_tx_ns2_st = lc_mmse_ns_init(tx_sample_rate, tx_frame_length, LC_MMSE_NOISE_SUPPRESS_LEVEL);
 #if defined(SPEECH_TX_AEC) && !defined(SPEECH_TX_NS)
     lc_mmse_ns_set_echo_state(speech_tx_ns2_st, st);
     lc_mmse_ns_set_echo_suppress(speech_tx_ns2_st, -40);
@@ -2413,7 +2436,7 @@ int voicebtpcm_pcm_audio_init(void)
 #endif
 
 #if defined(SPEECH_TX_NS2FLOAT)
-    speech_tx_ns2f_st = lc_mmse_ns_float_init(tx_sample_rate, tx_frame_length, -15);
+    speech_tx_ns2f_st = lc_mmse_ns_float_init(tx_sample_rate, tx_frame_length, LC_MMSE_NOISE_SUPPRESS_LEVEL);
 #if defined(SPEECH_TX_AEC) && !defined(SPEECH_TX_NS)
     lc_mmse_ns_float_set_echo_state(speech_tx_ns2f_st, st);
     lc_mmse_ns_float_set_echo_suppress(speech_tx_ns2f_st, -40);
@@ -2476,11 +2499,11 @@ int voicebtpcm_pcm_audio_init(void)
 #endif
 
 #ifdef SPEECH_RX_NS2
-    speech_rx_ns2_st = lc_mmse_ns_init(rx_sample_rate, rx_frame_length, 0);
+    speech_rx_ns2_st = lc_mmse_ns_init(rx_sample_rate, rx_frame_length, -10);
 #endif
 
 #ifdef SPEECH_RX_NS2FLOAT
-    speech_rx_ns2f_st = lc_mmse_ns_float_init(rx_sample_rate, rx_frame_length, 0);
+    speech_rx_ns2f_st = lc_mmse_ns_float_init(rx_sample_rate, rx_frame_length, -10);
 #endif
 
 #ifdef SPEECH_RX_NS3
@@ -2574,7 +2597,7 @@ int voicebtpcm_pcm_audio_deinit(void)
 #endif
 
 #ifdef SPEECH_TX_AEC2
-     bt_sco_chain_echo_suppress_deinit();
+     speech_aec2_destroy(speech_tx_ec2_st);
 #endif
 
 #ifdef SPEECH_TX_AEC2FLOAT
