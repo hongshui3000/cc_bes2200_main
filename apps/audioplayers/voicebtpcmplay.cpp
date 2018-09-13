@@ -274,7 +274,8 @@ const EqConfigRaw speech_tx_eq_cfg_16k = {
     .gain = -5.4899f,
     .num = 2,
     .param = {
-        { -1.893409f, 0.906625f, 0.950009f, -1.900017f, 0.950009f},// 300HZ HP Q:1.2
+        {-1.930717f, 0.936687f, 0.966851f, -1.933702f, 0.966851f},  // 200HZ HP Q:1.2
+//        { -1.893409f, 0.906625f, 0.950009f, -1.900017f, 0.950009f},// 300HZ HP Q:1.2
         {-0.593919f, 0.551986f, 1.174340f, -0.593919f, 0.377646f},// 3000HZ PP 5db Q:1.2
     },
 };
@@ -2471,7 +2472,7 @@ int voicebtpcm_pcm_audio_init(void)
 
 #if defined(SPEECH_TX_AGC)
     speech_tx_agc_st = agc_state_init(tx_sample_rate, tx_frame_length);
-    agc_set_config(speech_tx_agc_st, 2, 3, 1);
+    agc_set_config(speech_tx_agc_st, 1, 12, 1);
 #endif
 
 #if defined(SPEECH_TX_EQ)
