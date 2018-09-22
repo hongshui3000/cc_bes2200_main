@@ -2052,6 +2052,8 @@ bool app_bt_has_profile_record(U8 *addr)
 void app_check_version_ble_adv_start(void)
 {
     adv_para_struct adv_para;
+    uint8_t adv_all_data_len = 0;
+#ifndef BLE_DEFAULT_NAME
 #ifdef __TWS_CHANNEL_LEFT__
     uint8_t adv_data[] = {
         0x13,       //len
@@ -2070,7 +2072,21 @@ void app_check_version_ble_adv_start(void)
         0xff,       //type manufacturer
         0xff ,0xff,0x00,0x01// manufacturer data
     };
-#endif
+    adv_all_data_len = sizeof(adv_data);
+#endif  //__TWS_CHANNEL_LEFT__
+#else   //else BLE_DEFAULT_NAME
+    uint8_t adv_data[GAP_ADV_DATA_LEN];
+    adv_data[adv_all_data_len++] = sizeof(BLE_DEFAULT_NAME);
+    adv_data[adv_all_data_len++] = 0x09; //type name
+    memcpy(&adv_data[adv_all_data_len],BLE_DEFAULT_NAME,sizeof(BLE_DEFAULT_NAME)-1);
+    adv_all_data_len += sizeof(BLE_DEFAULT_NAME)-1;
+    adv_data[adv_all_data_len++] = BLE_MANU_DATA_LEN;
+    memcpy(&adv_data[adv_all_data_len],BLE_MANU_DATA,BLE_MANU_DATA_LEN);    
+    adv_all_data_len += BLE_MANU_DATA_LEN;
+    adv_data[adv_all_data_len] = '\0';
+//    TRACE("adv_all_data_len:%d adv_data:",adv_all_data_len);
+//    DUMP8("%02x ", adv_data, adv_all_data_len);
+#endif //endif BLE_DEFAULT_NAME
     struct nvrecord_env_t *nvrecord_env;
     TRACE("%s \r\n",__func__);
     if ((app_tws_get_mode() != TWSMASTER) && (nvrecord_env->tws_mode.mode == TWSMASTER))
@@ -2093,7 +2109,7 @@ void app_check_version_ble_adv_start(void)
     adv_para.adv_filter_policy =        0x00;
     ME_Ble_Set_Private_Address((BT_BD_ADDR *)&bt_addr[0]);
     ME_Ble_SetAdv_parameters(&adv_para);
-    ME_Ble_SetAdv_data(sizeof(adv_data), adv_data);
+    ME_Ble_SetAdv_data(adv_all_data_len, adv_data);
     ME_Ble_SetAdv_en(true);
 }
 
