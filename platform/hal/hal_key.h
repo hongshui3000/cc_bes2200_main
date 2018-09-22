@@ -15,6 +15,13 @@ extern "C" {
 #define CFG_SW_KEY_DBLCLICK_THRESH_MS       450
 #endif
 
+#ifdef _PROJ_2000IZ_C005__
+#define CFG_SW_KEY_REPEAT_THRESH_MS         700
+#define CFG_SW_KEY_LPRESS_THRESH_MS         500
+#define CFG_SW_KEY_LLPRESS_THRESH_MS        3000
+#define CFG_SW_KEY_DBLCLICK_THRESH_MS       450
+#endif
+
 #ifndef CFG_SW_KEY_LLPRESS_THRESH_MS
 #define CFG_SW_KEY_LLPRESS_THRESH_MS        2500//Modified by ATX : Leon.He_20180110:change long long press to 2.5s
 #endif

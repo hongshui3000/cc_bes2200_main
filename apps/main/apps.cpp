@@ -145,6 +145,11 @@ void CloseEarphone(void);
 #define APP_AUTO_POWER_OFF_TIMEOUT		60
 #endif
 
+#ifdef _PROJ_2000IZ_C005__
+#define APP_PAIR_TIMEOUT				30
+#define APP_AUTO_POWER_OFF_TIMEOUT		30
+#endif
+
 //Modified by ATX : Parker.Wei_20180324
 #ifdef _PROJ_2000IZ_C002__
 #define APP_PAIR_TIMEOUT				13

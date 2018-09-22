@@ -119,6 +119,9 @@ static uint8_t tws_inquiry_count=0;
 #define MAX_TWS_INQUIRY_TIMES   	21 //Approximate 2Mins
 #endif
 
+#ifdef _PROJ_2000IZ_C005__
+#define MAX_TWS_INQUIRY_TIMES   	10 //Approximate 1Mins
+#endif
 
 #ifndef MAX_TWS_INQUIRY_TIMES
 #define MAX_TWS_INQUIRY_TIMES        10

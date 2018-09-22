@@ -167,7 +167,7 @@ core-y		:= platform/ services/ apps/ utils/cqueue/ utils/list/ services/multimed
 KBUILD_CPPFLAGS += -Iplatform/cmsis/inc -Iservices/audioflinger -Iplatform/drivers/codec -Iplatform/hal -Iservices/fs/ -Iservices/fs/sd -Iservices/fs/fat  -Iservices/fs/fat/ChaN -Iplatform/drivers/norflash
 
 KBUILD_CPPFLAGS += \
-		-D_PROJ_2000IZ_C001__ \
+		-D_PROJ_2000IZ_C005__ \
 		-D_SIRI_ENABLED__ \
 		-D_AUTO_SWITCH_POWER_MODE__ \
         -D_BEST1000_QUAL_DCDC_ \
@@ -203,7 +203,7 @@ KBUILD_CPPFLAGS += \
     	-D__OPEN_AUDIO_LOOP_IN_DUT_MODE_\
     	-D__1_MB_CODESIZE_OTA__\
     	-D__DUAL_USER_SECTION_BAK__\
-    	-D__CFG_VERSION_BLE_DEFAULT_NAME__\
+    	-D__CUSTOMIZE_VERSION_BLE_NAME__\
     	-D__DISABLE_SHUTDOWN_WHEN_TESTING_MODE__\
 		-DRING_MERGE_POST_HANDLE\
 		-D__BT_WARNING_TONE_MERGE_INTO_STREAM_SBC__\
@@ -248,13 +248,14 @@ KBUILD_CPPFLAGS += \
 						-D__PC_CMD_UART__
 						
 
-#-D_ALLOW_RECONNECT_DURING_CALL_\
+#-D_FORCE_TO_LIMIT_MAX_AAC_BITRATE_192K_\						
 #-DADJUST_BITPOOL_BETWEEN_TWS							
 #-D__LINK_LOSE_TIMEOUT_THEN_ENTER_PAIRING__\	
 #-D__MASTER_AUTO_TWS_SEARCHING_WITH_EMPTY_PDL__\					
 #-D__SLAVE_AUTO_PAIRING_WHEN_FAILED_TO_RECONNECT__\	
 #-D__SLAVE_AUTO_PAIRING_WITH_EMPTY_PDL_\
-#    -D__3M_PACK__
+#-D__TWS_CLK_SYNC__
+#-D__3M_PACK__
 #-D__HW_PWM_CONTROL_LED__\
 #-D_AUTO_SWITCH_POWER_MODE__
 #-D_BEST1000_QUAL_DCDC_
@@ -266,7 +267,8 @@ KBUILD_CPPFLAGS += \
 #-DFLASH_REGION_BASE=0x6C018000
 #-D__TWS_1CHANNEL_PCM__
 #-D__TWS_RESAMPLE_ADJUST__
-
+#-D__TWS_FORCE_CRC_ERROR__
+#-D__TWS_CLK_SYNC__\
 LDS_FILE	:= best1000.lds
 
 KBUILD_CPPFLAGS +=

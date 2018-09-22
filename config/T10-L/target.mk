@@ -167,7 +167,7 @@ core-y		:= platform/ services/ apps/ utils/cqueue/ utils/list/ services/multimed
 KBUILD_CPPFLAGS += -Iplatform/cmsis/inc -Iservices/audioflinger -Iplatform/drivers/codec -Iplatform/hal -Iservices/fs/ -Iservices/fs/sd -Iservices/fs/fat  -Iservices/fs/fat/ChaN -Iplatform/drivers/norflash
 
 KBUILD_CPPFLAGS += \
-		-D_PROJ_2000IZ_C001__ \
+		-D_PROJ_2000IZ_C005__ \
 		-D_SIRI_ENABLED__ \
 		-D_AUTO_SWITCH_POWER_MODE__ \
         -D_BEST1000_QUAL_DCDC_ \
@@ -203,7 +203,7 @@ KBUILD_CPPFLAGS += \
     	-D__OPEN_AUDIO_LOOP_IN_DUT_MODE_\
     	-D__1_MB_CODESIZE_OTA__\
     	-D__DUAL_USER_SECTION_BAK__\
-    	-D__CFG_VERSION_BLE_DEFAULT_NAME__\
+    	-D__CUSTOMIZE_VERSION_BLE_NAME__\
     	-D__DISABLE_SHUTDOWN_WHEN_TESTING_MODE__\
 		-DRING_MERGE_POST_HANDLE\
 		-D__BT_WARNING_TONE_MERGE_INTO_STREAM_SBC__\

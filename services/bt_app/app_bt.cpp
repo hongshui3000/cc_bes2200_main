@@ -1290,6 +1290,11 @@ struct app_bt_profile_manager{
 #define APP_BT_PROFILE_RECONNECT_RETRY_LIMIT_CNT (36)
 #endif
 
+#ifdef _PROJ_2000IZ_C005__
+//reconnect = (INTERVAL+PAGETO)*CNT = (3000ms+5000ms)*36 = 388s, near to 5mins
+#define APP_BT_PROFILE_RECONNECT_RETRY_LIMIT_CNT (36)
+#endif
+
 //reconnect = (INTERVAL+PAGETO)*CNT = (3000ms+5000ms)*15 = 120s
 #define APP_BT_PROFILE_RECONNECT_RETRY_INTERVAL_MS (3000)
 #ifndef APP_BT_PROFILE_RECONNECT_RETRY_LIMIT_CNT

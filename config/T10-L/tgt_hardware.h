@@ -105,7 +105,7 @@ extern const struct HAL_KEY_GPIOKEY_CFG_T cfg_hw_gpio_key_cfg[CFG_HW_GPIOKEY_NUM
 #define CFG_HW_AUD_OUTPUT_PATH_SPEAKER_DEV (AUD_CHANNEL_MAP_CH0)
 #endif
 
-#ifdef __CFG_VERSION_BLE_DEFAULT_NAME__
+#ifdef __CUSTOMIZE_VERSION_BLE_NAME__
 #ifdef __TWS_CHANNEL_LEFT__
 #define BLE_DEFAULT_NAME  "BES-VERSION-0.3-L"
 #else 
@@ -126,8 +126,8 @@ extern uint8_t bt_addr[6];
 
 
 //5db per step max is 7
-//#define ANALOG_ADC_GAIN1    0x5
-//#define ANALOG_ADC_GAIN2    0x4
+#define ANALOG_ADC_GAIN1    0x5
+#define ANALOG_ADC_GAIN2    0x4
 
 #define LC_MMSE_NOISE_SUPPRESS_LEVEL (-12)
 #define CODEC_SADC_VOL (8)
@@ -147,8 +147,6 @@ extern  int8_t cfg_hw_aud_eq_band_settings[CFG_HW_AUD_EQ_NUM_BANDS];
 #define APP_BATTERY_PD_MV   (3220)
 
 #define APP_BATTERY_MAX_MV (4210)
-
-#define APP_BATTERY_CHARGENEED_REPORT_COUNT 24	// x*10s
 
 extern const struct HAL_IOMUX_PIN_FUNCTION_MAP app_battery_ext_charger_detecter_cfg;
 extern const struct HAL_IOMUX_PIN_FUNCTION_MAP app_battery_ext_charger_indicator_cfg;
