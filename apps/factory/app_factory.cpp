@@ -102,11 +102,13 @@ void app_factorymode_enter(void)
 void app_factorymode_key_init(void)
 {
     const APP_KEY_HANDLE  app_factorymode_handle_cfg[] = {
+#ifndef __DISABLE_SHUTDOWN_WHEN_TESTING_MODE__
 #ifdef __POWERKEY_CTRL_ONOFF_ONLY__
         {{APP_KEY_CODE_PWR,APP_KEY_EVENT_UP},"bt function key",app_bt_key_shutdown, NULL},
 #else
         {{APP_KEY_CODE_PWR,APP_KEY_EVENT_LONGLONGPRESS},"bt function key",app_bt_key_shutdown, NULL},
 #endif
+#endif //__DISABLE_SHUTDOWN_WHEN_TESTING_MODE__
         {{APP_KEY_CODE_PWR,APP_KEY_EVENT_CLICK},"bt function key",app_factorymode_languageswitch, NULL},
         {{APP_KEY_CODE_PWR,APP_KEY_EVENT_DOUBLECLICK},"bt function key",app_factorymode_bt_xtalcalib, NULL},
         {{APP_KEY_CODE_PWR,APP_KEY_EVENT_LONGPRESS},"bt function key",app_factorymode_bt_signalingtest, NULL},
