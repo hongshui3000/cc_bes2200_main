@@ -67,7 +67,9 @@ extern APP_STATUS_INDICATION_T remote_master_state;
 #endif
 extern void app_otaMode_enter(APP_KEY_STATUS *status, void *param);
 
-
+#ifdef __ALLOW_CLOSE_SIRI__
+bool is_siri_open_flag = 0;
+#endif
 #if HF_CUSTOM_FEATURE_SUPPORT & HF_CUSTOM_FEATURE_SIRI_REPORT
 extern int app_hfp_siri_voice(bool en);
 #endif
@@ -175,6 +177,7 @@ static bool start_pairing_without_connection(void)
 		TRACE("phone already connected\n");
 		return false;
 	}
+#ifndef __ALLOW_ENTER_PAIRING_WHEN_TWS_CONNECTED__  
 #ifdef __TWS_RIGHT_AS_MASTER__
 #if (!defined(__TWS_CHANNEL_RIGHT__) && !defined(__TWS_CHANNEL_LEFT__)) || defined(__TWS_CHANNEL_LEFT__)
 	if( isActiveConnections() == true)
@@ -192,6 +195,7 @@ static bool start_pairing_without_connection(void)
 	}
 #endif
 #endif//__TWS_RIGHT_AS_MASTER__
+#endif//__ALLOW_ENTER_PAIRING_WHEN_TWS_CONNECTED__
 
 	TRACE("enter pairing\n");
 
@@ -651,6 +655,9 @@ static bool handle_hfp_enable_siri(void)
 			&& (app_bt_device.hf_audio_state[BT_DEVICE_ID_1] == HF_AUDIO_DISCON))
 #endif
 	{
+#ifdef __ALLOW_CLOSE_SIRI__
+	          is_siri_open_flag = 1;
+#endif
 		 app_hfp_siri_voice(true);
 		return true;
 	}
@@ -709,7 +716,7 @@ static bool handle_func_key_click(void)
 			return true;
 #endif
 
-#ifndef __DISABLE_FUNC_KEY_FOR_HF_CALL_
+#ifdef __FUNCTION_KEY_CLICK_FOR_HF_CALL_
 #ifndef __DISABLE_THREEWAY_CALL_CONTROL_
 	if (handle_threeway_call_end_and_answer()==true)
 		return true;
@@ -719,7 +726,7 @@ static bool handle_func_key_click(void)
 
 	if (handle_hfp_call_hung_up()==true)
 		return true;
-#endif//__DISABLE_FUNC_KEY_FOR_HF_CALL_
+#endif//__FUNCTION_KEY_CLICK_FOR_HF_CALL_
 
 #ifdef __FUNCTION_KEY_CLICK_FOR_VOL_DOWN_
 	handled = handle_vol_down();
@@ -738,6 +745,23 @@ static bool handle_func_key_doubleclick(void)
 	if (start_pairing_without_connection() == true )
         return true;
 #endif//__FUNCTION_KEY_DOUBLE_CLICK_FOR_PAIRING_
+
+#ifdef __FUNCTION_KEY_DOUBLE_CLICK_FOR_HF_CALL_
+#ifndef __DISABLE_THREEWAY_CALL_CONTROL_
+	if (handle_threeway_call_end_and_answer()==true)
+		return true;
+#endif//__DISABLE_THREEWAY_CALL_CONTROL_
+	if (handle_hfp_call_answer()==true)
+		return true;
+
+	if (handle_hfp_call_hung_up()==true)
+		return true;
+#endif//__FUNCTION_KEY_DOUBLE_CLICK_FOR_HF_CALL_
+
+#ifdef __FUNCTION_KEY_DOUBLE_CLICK_FOR_MUSIC_CTRL_
+	if (handle_play_pause()==true)
+		return true;
+#endif
 
 #ifdef __FUNCTION_KEY_DOUBLE_CLICK_FOR_SLAVE_ENTER_PAIRING_
 	if (slave_enter_pairing_when_pdl_is_null() == true )
@@ -773,7 +797,7 @@ static bool handle_func_key_doubleclick(void)
 	}
 #endif
 #if defined(__FUNCTION_KEY_DOUBLE_CLICK_FOR_VOICE_DIAL_) && defined(_SIRI_ENABLED__)
-	if (handle_hfp_enable_siri()== true)
+            if (handle_hfp_enable_siri()== true)
 		return true;
 #endif
 #ifdef __FUNCTION_KEY_DOUBLE_CLICK_FOR_LAST_NUMBER_REDDIAL_
@@ -946,8 +970,22 @@ static bool handle_func_key_tripleclick(void)
         return true;
 #endif
 #if defined(__FUNCTION_KEY_TRIPLE_CLICK_FOR_VOICE_DIAL_) && defined(_SIRI_ENABLED__)
-	if (handle_hfp_enable_siri()== true)
+#ifdef __ALLOW_CLOSE_SIRI__
+	if(is_siri_open_flag == 0)
+        {
+            if (handle_hfp_enable_siri()== true)
 		return true;
+        }
+        else 
+        {
+            is_siri_open_flag = 0;
+            app_hfp_siri_voice(false);
+            return true;
+        }
+#else 
+    if (handle_hfp_enable_siri()== true)
+        return true;
+#endif
 #endif
 #ifdef __FUNCTION_KEY_TRIPLE_CLICK_CLEAR_PHONE_RECORD_
     if(app_clear_phone_paired_record()==true)
@@ -968,6 +1006,23 @@ static bool handle_func_key_tripleclick(void)
 	if(handle_slave_Weared()==true)
 		return false;  		//must return fasle,slave need notify the KEY to master
 	
+#endif
+
+#ifdef __FUNCTION_KEY_TRIPLE_CLICK_FOR_HF_CALL_
+#ifndef __DISABLE_THREEWAY_CALL_CONTROL_
+	if (handle_threeway_call_end_and_answer()==true)
+		return true;
+#endif//__DISABLE_THREEWAY_CALL_CONTROL_
+	if (handle_hfp_call_answer()==true)
+		return true;
+
+	if (handle_hfp_call_hung_up()==true)
+		return true;
+#endif//__FUNCTION_KEY_TRIPLE_CLICK_FOR_HF_CALL_
+
+#ifdef __FUNCTION_KEY_TRIPLE_CLICK_FOR_MUSIC_CTRL_
+	if (handle_play_pause()==true)
+		return true;
 #endif
 
 #ifdef __FUNCTION_KEY_TRIPLE_CLICK_FOR_TWS_SEARCHING_STOP_PARING_
@@ -1128,6 +1183,9 @@ static bool handle_down_key_double_click(void)
 #ifdef __DOWN_KEY_FOR_VOL_UP_
 	handled = handle_vol_up();
 #endif
+#ifdef __DOWN_KEY_DOUBLE_CLICK_FOR_PAIRING_
+		handled = start_pairing_and_disconnect_all();
+#endif
 	return handled;
 }
 
@@ -1246,6 +1304,22 @@ static bool handle_remote_func_key_doubleclick(void)
 	if (handle_a2dp_skipr()== true)
 		return true;
 #endif
+#ifdef __FUNCTION_REMOTE_KEY_DOUBLE_CLICK_FOR_HF_CALL_
+#ifndef __DISABLE_THREEWAY_CALL_CONTROL_
+	if (handle_threeway_call_end_and_answer()==true)
+		return true;
+#endif
+
+	if (handle_hfp_call_answer()==true)
+		return true;
+
+	if (handle_hfp_call_hung_up()==true)
+		return true;
+#endif
+#ifdef __FUNCTION_REMOTE_KEY_DOUBLE_CLICK_FOR_MUSIC_CTRL_
+	if (handle_play_pause()==true)
+		return true;
+#endif
 #if defined(__FUNCTION_REMOTE_KEY_DOUBLE_CLICK_FOR_VOICE_DIAL_) && defined(_SIRI_ENABLED__)
 	if (handle_hfp_enable_siri()== true)
 		return true;
@@ -1259,13 +1333,44 @@ static bool handle_remote_func_key_doubleclick(void)
 static bool handle_remote_func_key_tripleclick(void)
 {
 	TRACE("%s enter",__func__);
-#ifdef __FUNCTION_REMOTE_KEY_DOUBLE_CLICK_FOR__SKIPR_
+#ifdef __FUNCTION_REMOTE_KEY_TRIPLE_CLICK_FOR_SKIPR_
     if (handle_a2dp_skipr()==true)
         return true;
 #endif
-#if defined(__FUNCTION_REMOTE_KEY_TRIPLE_CLICK_FOR_VOICE_DIAL_) && defined(_SIRI_ENABLED__)
-	if (handle_hfp_enable_siri()== true)
+#ifdef __FUNCTION_REMOTE_KEY_TRIPLE_CLICK_FOR_HF_CALL_
+#ifndef __DISABLE_THREEWAY_CALL_CONTROL_
+	if (handle_threeway_call_end_and_answer()==true)
 		return true;
+#endif
+
+	if (handle_hfp_call_answer()==true)
+		return true;
+
+	if (handle_hfp_call_hung_up()==true)
+		return true;
+#endif
+#ifdef __FUNCTION_REMOTE_KEY_TRIPLE_CLICK_FOR_MUSIC_CTRL_
+	if (handle_play_pause()==true)
+		return true;
+#endif
+#if defined(__FUNCTION_REMOTE_KEY_TRIPLE_CLICK_FOR_VOICE_DIAL_) && defined(_SIRI_ENABLED__)
+#ifdef __ALLOW_CLOSE_SIRI__
+        if(is_siri_open_flag == 0)
+        {
+            if (handle_hfp_enable_siri()== true)
+		return true;
+        }
+        else 
+        {
+            is_siri_open_flag = 0;
+            app_hfp_siri_voice(false);
+            return true;
+        }
+#else 
+    if (handle_hfp_enable_siri()== true)
+        return true;
+#endif
+
 #endif
 	//@20180304 by parker.wei for _PROJ_2000IZ_C003__ UI
 #if defined(_PROJ_2000IZ_C003__) && defined(__TWS_CHANNEL_RIGHT__)
@@ -1295,6 +1400,10 @@ static bool handle_remote_func_key_longpress(void)
 	TRACE("%s enter",__func__);
 #ifdef __FUNCTION_REMOTE_KEY_LONGPRESS_FOR_HF_CALL_
 	if (handle_func_key_longpress_for_hfp() == true)
+		return true;
+#endif
+#ifdef __FUNCTION_REMOTE_KEY_LONG_PRESS_FOR_HFP_REJECT_CALL_
+	if (handle_hfp_call_reject() == true)
 		return true;
 #endif
 	return false;

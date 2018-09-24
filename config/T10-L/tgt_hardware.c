@@ -2,6 +2,7 @@
 #include "iir_process.h"
 #include "fir_process.h"
 #include "hw_codec_iir_process.h"
+#include "coherent_denoise.h"
 
 const struct HAL_IOMUX_PIN_FUNCTION_MAP cfg_hw_pinmux_pwl[CFG_HW_PLW_NUM] = {
 #ifdef __HW_PWM_CONTROL_LED__
@@ -49,10 +50,10 @@ const int8_t cfg_aud_eq_sbc_band_settings[CFG_HW_AUD_EQ_NUM_BANDS] = {0, 0, 0, 0
 #define TX_PA_GAIN                          CODEC_TX_PA_GAIN_DEFAULT
 
 const struct CODEC_DAC_VOL_T codec_dac_vol[TGT_VOLUME_LEVEL_QTY] = {
-    {TX_PA_GAIN,0x03,-11},
+    {TX_PA_GAIN,0x03,-18},
     {TX_PA_GAIN,0x03,-99},
+    {TX_PA_GAIN,0x03,-70},
     {TX_PA_GAIN,0x03,-45},
-    {TX_PA_GAIN,0x03,-42},
     {TX_PA_GAIN,0x03,-39},
     {TX_PA_GAIN,0x03,-36},
     {TX_PA_GAIN,0x03,-33},
@@ -79,14 +80,14 @@ const struct HAL_IOMUX_PIN_FUNCTION_MAP app_battery_ext_charger_indicator_cfg = 
 
 const IIR_CFG_T audio_eq_iir_cfg = {
     .gain0 = 0,
-    .gain1 = 0.15,
-    .num = 0,
+    .gain1 = 0,
+    .num = 5,
     .param = {
-        {0.0,   50.0,   0.7},
-        {0.0,   250.0,  0.7},
-        {0.0,   1000.0, 0.7},
-        {12.0,   4000.0, 0.7},
-        {12.0,   8000.0, 0.7}
+        {IIR_TYPE_PEAK, .0,   200,   2},
+        {IIR_TYPE_PEAK, .0,   600,  2},
+        {IIR_TYPE_PEAK, .0,   2000.0, 2},
+        {IIR_TYPE_PEAK, .0,  6000.0, 2},
+        {IIR_TYPE_PEAK, .0,  12000.0, 2}
     }
 };
 
@@ -134,3 +135,29 @@ const FIR_CFG_T audio_eq_fir_cfg = {
     }
 };
 
+const FIR_CFG_T speech_spk_eq_16k_cfg = {
+    .gain0 = 6,
+    .gain1 = 6,
+    .len = 99,
+    .coef = {
+        8589,15275,1642,-9312,-6090,-3375,-3148,-2896,-2284,-1742,-1330,-968,-650,-381,-157,26,171,284,368,427,465,485,491,484,468,445,416,384,350,315,280,245,212,181,153,127,102,81,62,45,31,19,8,0,-7,-12,-16,-19,-20,-21,-21,-21,-21,-20,-18,-17,-15,-14,-12,-11,-10,-8,-7,-6,-5,-4,-3,-2,-2,-1,-1,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,
+    }
+};
+
+const FIR_CFG_T speech_spk_eq_8k_cfg = {
+    .gain0 = 6,
+    .gain1 = 6,
+    .len = 44,
+    .coef = {
+        26233,-11516,-8568,-5989,-3854,-2175,-924,-47,520,841,979,990,917,796,655,512,379,263,168,93,38,-1,-25,-39,-45,-45,-41,-36,-29,-23,-17,-12,-7,-4,-2,0,1,2,2,2,2,2,1,1,
+    }
+};
+
+const COHERENT_DENOISE_CFG_T coherent_denoise_cfg =
+{
+    .left_gain              = 1.0f,
+    .right_gain             = 1.0f,
+    .delaytaps              = 0, 
+    .freq_smooth_enable     = 1,
+    .low_quality_enable     = 0, 
+};
