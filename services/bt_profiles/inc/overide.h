@@ -698,7 +698,7 @@
  **********************************************************************************/
 /* Value */
 #ifndef DIP_DEVICE
-#define DIP_DEVICE                          XA_ENABLED
+#define DIP_DEVICE                          XA_DISABLED
 #endif
 
 
