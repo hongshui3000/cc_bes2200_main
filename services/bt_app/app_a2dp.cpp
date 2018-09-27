@@ -1740,9 +1740,22 @@ if (tws_a2dp_callback(Stream, Info))
 #ifdef __TWS__
 #ifdef A2DP_AAC_ON
             if(Stream->stream.codecCfg.codecType == AVDTP_CODEC_TYPE_MPEG2_4_AAC){
-                set_a2dp_reconfig_sample_rate(Stream);
-                app_bt_device.sample_rate[stream_id_flag.id] = Stream->stream.codecCfg.elements[0];
-                TRACE("aac sample_rate:%x\n",app_bt_device.sample_rate[stream_id_flag.id]);
+//                set_a2dp_reconfig_sample_rate(Stream);
+                app_bt_device.sample_rate[stream_id_flag.id] = AVDTP_CODEC_TYPE_MPEG2_4_AAC;
+                // convert aac sample_rate to sbc sample_rate format
+                if (Info->p.configReq->codec.elements[1] & A2DP_AAC_OCTET1_SAMPLING_FREQUENCY_44100) {
+                    TRACE("::A2DP_EVENT_STREAM_OPEN stream_id:%d, aac sample_rate 44100\n", stream_id_flag.id);
+                    app_bt_device.sample_rate[stream_id_flag.id] = A2D_SBC_IE_SAMP_FREQ_44;
+                }
+                else if (Info->p.configReq->codec.elements[2] & A2DP_AAC_OCTET2_SAMPLING_FREQUENCY_48000) {
+                    TRACE("::A2DP_EVENT_STREAM_OPEN stream_id:%d, aac sample_rate 48000\n", stream_id_flag.id);
+                    app_bt_device.sample_rate[stream_id_flag.id] = A2D_SBC_IE_SAMP_FREQ_48;
+                }
+                else {
+                    TRACE("::A2DP_EVENT_STREAM_OPEN stream_id:%d, aac sample_rate not 48000 or 44100, set to 44100\n", stream_id_flag.id);
+                    app_bt_device.sample_rate[stream_id_flag.id] = A2D_SBC_IE_SAMP_FREQ_44;
+                }
+                //app_bt_device.sample_rate[stream_id_flag.id] = Stream->stream.codecCfg.elements[0];
             }else
 #endif
             {
