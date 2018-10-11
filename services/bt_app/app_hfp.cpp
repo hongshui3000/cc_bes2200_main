@@ -91,6 +91,8 @@ btapp_sniffer_sco_status_callback sniffer_sco_status_callback;
 
 extern uint8_t app_poweroff_flag;
 uint8_t slave_sco_active=0;
+uint8_t app_call_ring_flag=0;
+
 void btapp_sniffer_sco_start(uint16_t conhdl,uint8_t sco_status,uint8_t airmode,uint32_t bandwidth)
 {
     TRACE("conhdl=%x,scostatus=%x,airmode=%x,samplerate=%x ct=%d",conhdl,sco_status,airmode,bandwidth,hal_sys_timer_get());
@@ -430,6 +432,7 @@ void hfp_app_status_indication(enum BT_DEVICE_ID_T chan_id,HfCallbackParms *Info
             if(Info->p.call == HF_CALL_NONE && app_bt_device.hfchan_call[chan_id] == HF_CALL_ACTIVE){
                 //////report call hangup voice
                 TRACE("!!!HF_EVENT_CALL_IND  APP_STATUS_INDICATION_HANGUPCALL  chan_id:%d\n",chan_id);
+                app_status_indication_set(APP_STATUS_INDICATION_HANGUPCALL);
                 app_audio_manager_sendrequest(APP_BT_STREAM_MANAGER_STOP_MEDIA,BT_STREAM_VOICE,chan_id,0,0,0);
                 ///disable media prompt                
                 if(app_bt_device.hf_endcall_dis[chan_id] == false)               
@@ -464,6 +467,7 @@ void hfp_app_status_indication(enum BT_DEVICE_ID_T chan_id,HfCallbackParms *Info
 #endif
                 app_audio_manager_sendrequest(APP_BT_STREAM_MANAGER_STOP_MEDIA,BT_STREAM_VOICE,chan_id,0,0,0);
                 app_voice_report(APP_STATUS_INDICATION_REFUSECALL,chan_id);/////////////duÁ½Éù
+                app_status_indication_set(APP_STATUS_INDICATION_REFUSECALL);
 #ifdef __TWS_RECONNECT_USE_BLE__
                 if ((app_tws_get_mode() != TWSMASTER) && (nvrecord_env->tws_mode.mode == TWSMASTER)) {
                     if (app_tws_ble_reconnect.scan_func)
@@ -482,6 +486,7 @@ void hfp_app_status_indication(enum BT_DEVICE_ID_T chan_id,HfCallbackParms *Info
             break;
         case HF_EVENT_AUDIO_CONNECTED:
             TRACE("!!!HF_EVENT_AUDIO_CONNECTED  APP_STATUS_INDICATION_ANSWERCALL  chan_id:%d\n",chan_id);
+            app_status_indication_set(APP_STATUS_INDICATION_ANSWERCALL);
 //Modified by ATX : Leon.He_20171123
 #ifdef __ONLY_REPORT_IMCOMING_CALL_ONCE_
             incoming_call_report_count = 0;
@@ -810,6 +815,12 @@ void hfp_callback(HfChannel *Chan, HfCallbackParms *Info)
         break;
     case HF_EVENT_CALLSETUP_IND:
         TRACE("::HF_EVENT_CALLSETUP_IND chan_id:%d, callSetup = %d\n", chan_id_flag.id,Info->p.callSetup);
+        if(app_call_ring_flag == 1)
+        {
+            app_call_ring_flag = 0;
+            TRACE("::HF_EVENT_CALLSETUP_IND :ANSWERCALL FOR IOS\n");
+            app_status_indication_set(APP_STATUS_INDICATION_ANSWERCALL);
+        }
 #if !defined(FPGA) && defined(__EARPHONE__)
         hfp_app_status_indication(chan_id_flag.id,Info);
 #endif
@@ -987,6 +998,8 @@ void hfp_callback(HfChannel *Chan, HfCallbackParms *Info)
         break;
     case HF_EVENT_RING_IND:
         TRACE("::HF_EVENT_RING_IND  chan_id:%d\n", chan_id_flag.id);
+        app_call_ring_flag = 1;
+        app_status_indication_set(APP_STATUS_INDICATION_INCOMINGCALL);
 #if !defined(FPGA) && defined(__EARPHONE__)
         if(app_bt_device.hf_audio_state[chan_id_flag.id] != HF_AUDIO_CON){
 #if defined(TWS_RING_SYNC) && defined(__TWS__)
