@@ -591,13 +591,15 @@ static void app_bt_golbal_handle(const BtEvent *Event)
 #endif
 
 #if defined(__TWS__)
-#if defined(__EARPHONE_STAY_BOTH_SCAN__)&& !defined(__MOBILE_DISCONNECTED_NOT_AUTO_ENTER_PARING_)
+//#if defined __EARPHONE_STAY_BOTH_SCAN__&&!defined(__MOBILE_DISCONNECTED_NOT_AUTO_ENTER_PARING_)//Modified by ATX : Parke.Wei_20180328
 			nv_record_env_get(&nvrecord_env);
 			if(nvrecord_env->tws_mode.mode == TWSSLAVE){
-				app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BAM_CONNECTABLE_ONLY,0,0);
-	            app_status_indication_set(APP_STATUS_INDICATION_PAGESCAN);
-			}else if((nvrecord_env->tws_mode.mode == TWSMASTER && app_tws_get_mode() == TWSMASTER) && (MEC(activeCons) == 1)
-					|| MEC(activeCons) == 0){
+                                app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BAM_CONNECTABLE_ONLY,0,0);
+                                app_status_indication_set(APP_STATUS_INDICATION_PAGESCAN);
+			}
+#if defined __EARPHONE_STAY_BOTH_SCAN__&&!defined(__MOBILE_DISCONNECTED_NOT_AUTO_ENTER_PARING_)//Modified by ATX : Parke.Wei_20180328
+                        else if((nvrecord_env->tws_mode.mode == TWSMASTER && app_tws_get_mode() == TWSMASTER) && (MEC(activeCons) == 1)
+                                    || MEC(activeCons) == 0){
 #ifdef __LINK_LOSE_TIMEOUT_THEN_ENTER_PAIRING__//Modified by ATX : Leon.He_20170317: reconnect only during link loss, enter pairing after timeout
 #ifdef __DISCONNECT_TEST_ 
                         if((Event->p.disconnect.remDev->discReason !=0x8)||(hf_event_disconnected_reason !=0x8))
