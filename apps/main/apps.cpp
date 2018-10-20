@@ -1418,6 +1418,7 @@ int app_init(void)
         BesbtInit();
         osDelay(600);
         bt_drv_extra_config_after_init();
+        app_status_indication_set(APP_STATUS_INDICATION_VERSION_CHECK);
         app_check_version_ble_adv_start();
     }
 #endif//end __ENGINEER_MODE_SUPPORT__
@@ -1618,6 +1619,8 @@ int app_poweron_from_fake_poweroff(void)
 void app_fake_poweroff(void)
 {
 	struct nvrecord_env_t *nvrecord_env;
+        if(app_poweroff_flag == 1)
+            return;
 	nv_record_env_get(&nvrecord_env);
 
 	app_status_indication_set(APP_STATUS_INDICATION_POWEROFF);
