@@ -340,7 +340,7 @@ BtStatus app_tws_master_ble_scan_process(uint8_t enable)
         memcpy(&record.bdAddr, &nvrecord_env->tws_mode.record.bdAddr, BD_ADDR_SIZE);
         status=BT_STATUS_SUCCESS;
     }
-#ifdef _ALLOW_RECONNECT_DURING_CALL_
+#ifdef __ALLOW_RECONNECT_DURING_CALL_
     if (enable == 1 && ble_scan_status ==0 )
 #else
     if (enable == 1 && app_bt_device.hf_audio_state[0] == HF_AUDIO_DISCON && ble_scan_status ==0 )
@@ -369,7 +369,7 @@ BtStatus app_tws_slave_ble_adv_process(uint8_t enable)
 {
     BtStatus status = BT_STATUS_SUCCESS; 
 
-#ifdef _ALLOW_RECONNECT_DURING_CALL_
+#ifdef __ALLOW_RECONNECT_DURING_CALL_
     if (enable == 1 && ble_adv_status ==0 )
 #else
     if (enable == 1 && app_bt_device.hf_audio_state[0] == HF_AUDIO_DISCON && ble_adv_status ==0 )
