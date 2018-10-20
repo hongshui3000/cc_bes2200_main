@@ -68,7 +68,7 @@ extern "C" bool app_usbaudio_mode_on(void);
 #elif defined(_PROJ_2000IZ_C002__)//Modified by ATX : Parker.Wei_20180329
 #define APP_BATTERY_CHARGENEED_REPORT_COUNT (30)
 #elif defined(_PROJ_2000IZ_C005__)
-#define APP_BATTERY_CHARGENEED_REPORT_COUNT (30)
+#define APP_BATTERY_CHARGENEED_REPORT_COUNT (24)
 #else
 #define APP_BATTERY_CHARGENEED_REPORT_COUNT (2)
 #endif
