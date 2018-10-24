@@ -221,7 +221,7 @@ const CompexpConfig speech_tx_compexp_cfg = {
     .expand_slope = -0.5f,
     .attack_time = 0.01f,
     .release_time = 0.1f,
-    .makeup_gain = 6,
+    .makeup_gain = 12,
     .delay = 128,
 };
 #endif
