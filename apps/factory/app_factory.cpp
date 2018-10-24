@@ -454,7 +454,7 @@ int app_factorymode_init(uint32_t factorymode)
     app_os_init();
     app_factorymode_indication_init();
     app_battery_open();
-    if (app_key_open(false)){
+    if (app_key_open(false,false)){
         nRet = -1;
         goto exit;
     }

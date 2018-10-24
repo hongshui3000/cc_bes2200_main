@@ -129,7 +129,7 @@ int ota_init(void)
     app_sysfreq_req(APP_SYSFREQ_USER_APP_0, APP_SYSFREQ_52M);
     app_os_init();
     app_battery_open();
-    if (app_key_open(false)){
+    if (app_key_open(false,false)){
         nRet = -1;
         goto exit;
     }

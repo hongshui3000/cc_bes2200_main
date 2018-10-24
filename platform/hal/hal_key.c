@@ -77,7 +77,8 @@ typedef uint32_t                            GPIO_MAP_T;
 #define KEY_DEBOUNCE_INTERVAL               (KEY_CHECKER_INTERVAL * 2)
 #define KEY_DITHER_INTERVAL                 (KEY_CHECKER_INTERVAL * 1)
 //Modified by ATX : cc_20180414: support seven click
-#define MAX_KEY_CLICK_COUNT                 (HAL_KEY_EVENT_SEVENCLICK - HAL_KEY_EVENT_CLICK)
+#define MAX_KEY_CLICK_COUNT                 (HAL_KEY_EVENT_TRIPLECLICK- HAL_KEY_EVENT_CLICK)
+#define MAX_KEY_CLICK_COUNT_CHARGING                 (HAL_KEY_EVENT_SEVENCLICK - HAL_KEY_EVENT_CLICK)
 
 struct HAL_KEY_ADCKEY_T {
     bool debounce;
@@ -607,6 +608,341 @@ static void hal_key_enable_allint(void)
 #endif
 }
 
+static void hal_key_debounce_handler_in_charging(void * param)
+{
+    uint32_t time;
+    enum HAL_KEY_CODE_T code_down = HAL_KEY_CODE_NONE;
+    int index;
+    bool need_timer = false;
+
+    timer_active = false;
+
+    time = hal_sys_timer_get();
+
+#ifndef NO_PWRKEY
+#ifdef __POWERKEY_CTRL_ONOFF_ONLY__
+    if (pwr_key.debounce) {
+        pwr_key.debounce = false;
+        code_down |= HAL_KEY_CODE_PWR;
+#ifdef NO_GROUPKEY
+        hal_key_enable_allint();
+#else
+        hal_pwrkey_enable_int();
+#endif
+    }
+#else
+    if (pwr_key.debounce || pwr_key.dither || pwr_key.pressed) {
+        bool pressed = hal_pwrkey_get_status();
+
+        //HAL_KEY_TRACE("keyDbnPwr: dbn=%d dither=%d pressed=%d/%d", pwr_key.debounce, pwr_key.dither, pwr_key.pressed, pressed);
+
+        if (pwr_key.debounce) {
+            pwr_key.pressed = pressed;
+            if (pressed) {
+                pwr_key.dither = false;
+                if (time - pwr_key.time >= KEY_DEBOUNCE_INTERVAL) {
+                    pwr_key.debounce = false;
+                    pwr_key.dither = false;
+                    code_down |= HAL_KEY_CODE_PWR;
+                }
+            } else {
+                pwr_key.debounce = false;
+                pwr_key.dither = true;
+                pwr_key.time = time;
+            }
+        } else if (pwr_key.dither) {
+            if (time - pwr_key.time >= KEY_DITHER_INTERVAL) {
+                pwr_key.dither = false;
+                pwr_key.pressed = false;
+#ifdef NO_GROUPKEY
+                hal_key_enable_allint();
+#else
+                hal_pwrkey_enable_int();
+#endif
+            }
+        } else if (pwr_key.pressed) {
+            if (pressed) {
+                code_down |= HAL_KEY_CODE_PWR;
+            } else {
+                pwr_key.pressed = false;
+#ifdef NO_GROUPKEY
+                hal_key_enable_allint();
+#else
+                hal_pwrkey_enable_int();
+#endif
+            }
+        }
+    }
+    if (pwr_key.debounce || pwr_key.dither || pwr_key.pressed) {
+        need_timer = true;
+    }
+#endif
+#endif
+
+#if (CFG_HW_ADCKEY_NUMBER > 0)
+    if (adc_key.debounce || adc_key.dither || adc_key.code_down != HAL_KEY_CODE_NONE) {
+        bool skip_check = false;
+
+        //HAL_KEY_TRACE("keyDbnAdc: dbn=%d dither=%d code_dbn=0x%X code_down=0x%X", adc_key.debounce, adc_key.dither, adc_key.code_debounce, adc_key.code_down);
+
+        if (adc_key.debounce) {
+            if (adc_key.code_debounce == HAL_KEY_CODE_NONE) {
+                adc_key.debounce = false;
+                adc_key.dither = true;
+                adc_key.time = time;
+            } else {
+                if (time - adc_key.time >= KEY_DEBOUNCE_INTERVAL) {
+                    adc_key.debounce = false;
+                    adc_key.dither = false;
+                    adc_key.code_down = adc_key.code_debounce;
+                    adc_key.code_debounce = HAL_KEY_CODE_NONE;
+                    code_down |= adc_key.code_down;
+                }
+            }
+        } else if (adc_key.dither) {
+            if (time - adc_key.time >= KEY_DITHER_INTERVAL) {
+                adc_key.dither = false;
+                adc_key.code_debounce = HAL_KEY_CODE_NONE;
+                adc_key.code_down = HAL_KEY_CODE_NONE;
+#ifdef NO_GROUPKEY
+                hal_key_enable_allint();
+#else
+                hal_adckey_enable_press_int();
+#endif
+            }
+            skip_check = true;
+        } else if (adc_key.code_down != HAL_KEY_CODE_NONE) {
+            if (adc_key.code_debounce == adc_key.code_down) {
+                code_down |= adc_key.code_down;
+            } else {
+                adc_key.code_down = HAL_KEY_CODE_NONE;
+#ifdef NO_GROUPKEY
+                hal_key_enable_allint();
+#else
+                hal_adckey_enable_press_int();
+#endif
+                skip_check = true;
+            }
+        }
+
+        if (!skip_check) {
+            hal_adckey_enable_adc_int();
+        }
+    }
+    if (adc_key.debounce || adc_key.dither || adc_key.code_down != HAL_KEY_CODE_NONE) {
+        need_timer = true;
+    }
+#endif
+
+#if (CFG_HW_GPIOKEY_NUM > 0)
+    enum HAL_GPIO_PIN_T gpio;
+    GPIO_MAP_T pin;
+    uint32_t lock;
+
+    ASSERT((gpio_key.pin_debounce & gpio_key.pin_dither) == 0 &&
+            (gpio_key.pin_debounce & gpio_key.pin_dither) == 0 &&
+            (gpio_key.pin_debounce & gpio_key.pin_dither) == 0,
+        "Bad gpio_key pin map: dbn=0x%X dither=0x%X down=0x%X",
+        gpio_key.pin_debounce, gpio_key.pin_dither, gpio_key.pin_down);
+
+    //HAL_KEY_TRACE("keyDbnGpio: pin_dbn=0x%X pin_dither=0x%X pin_down=0x%X", gpio_key.pin_debounce, gpio_key.pin_dither, gpio_key.pin_down);
+
+    if (gpio_key.pin_dither) {
+        if (time - gpio_key.time_dither >= KEY_DITHER_INTERVAL) {
+            pin = gpio_key.pin_dither;
+
+            lock = int_lock();
+            gpio_key.pin_dither &= ~pin;
+            int_unlock(lock);
+
+#ifdef NO_GROUPKEY
+            hal_key_enable_allint();
+#else
+            gpio = HAL_GPIO_PIN_P0_0;
+            while (pin) {
+                if (pin & ((GPIO_MAP_T)1 << gpio)) {
+                    pin &= ~((GPIO_MAP_T)1 << gpio);
+                    index = hal_gpiokey_find_index(gpio);
+                    hal_gpiokey_enable_irq(gpio, (cfg_hw_gpio_key_cfg[index].key_down == HAL_KEY_GPIOKEY_VAL_LOW) ?
+                        HAL_GPIO_IRQ_POLARITY_LOW_FALLING : HAL_GPIO_IRQ_POLARITY_HIGH_RISING);
+                }
+                gpio++;
+            }
+#endif
+        }
+    }
+    if (gpio_key.pin_down) {
+        pin = gpio_key.pin_down;
+
+        gpio = HAL_GPIO_PIN_P0_0;
+        while (pin) {
+            if (pin & ((GPIO_MAP_T)1 << gpio)) {
+                pin &= ~((GPIO_MAP_T)1 << gpio);
+                index = hal_gpiokey_find_index(gpio);
+                if (hal_gpio_pin_get_val(gpio) == cfg_hw_gpio_key_cfg[index].key_down) {
+                    code_down |= cfg_hw_gpio_key_cfg[index].key_code;
+                } else {
+                    gpio_key.pin_down &= ~((GPIO_MAP_T)1 << gpio);
+#ifdef NO_GROUPKEY
+                    hal_key_enable_allint();
+#else
+                    hal_gpiokey_enable_irq(gpio, (cfg_hw_gpio_key_cfg[index].key_down == HAL_KEY_GPIOKEY_VAL_LOW) ?
+                        HAL_GPIO_IRQ_POLARITY_LOW_FALLING : HAL_GPIO_IRQ_POLARITY_HIGH_RISING);
+#endif
+                }
+            }
+            gpio++;
+        }
+    }
+    if (gpio_key.pin_debounce) {
+        GPIO_MAP_T down_added = 0;
+        GPIO_MAP_T dither_added = 0;
+
+        pin = gpio_key.pin_debounce;
+
+        gpio = HAL_GPIO_PIN_P0_0;
+        while (pin) {
+            if (pin & ((GPIO_MAP_T)1 << gpio)) {
+                pin &= ~((GPIO_MAP_T)1 << gpio);
+                index = hal_gpiokey_find_index(gpio);
+                if (hal_gpio_pin_get_val(gpio) == cfg_hw_gpio_key_cfg[index].key_down) {
+                    if (time - gpio_key.time_debounce >= KEY_DEBOUNCE_INTERVAL) {
+                        down_added |= ((GPIO_MAP_T)1 << gpio);
+                        code_down |= cfg_hw_gpio_key_cfg[index].key_code;
+                        gpio_key.pin_down |= ((GPIO_MAP_T)1 << gpio);
+                    }
+                } else {
+                    dither_added |= ((GPIO_MAP_T)1 << gpio);
+                }
+            }
+            gpio++;
+        }
+
+        lock = int_lock();
+        gpio_key.pin_debounce &= ~(down_added | dither_added);
+        gpio_key.pin_dither |= dither_added;
+        int_unlock(lock);
+    }
+    if (gpio_key.pin_dither || gpio_key.pin_down || gpio_key.pin_debounce) {
+        need_timer = true;
+    }
+#endif
+
+    enum HAL_KEY_CODE_T down_new;
+    enum HAL_KEY_CODE_T up_new;
+    enum HAL_KEY_CODE_T map;
+
+    down_new = code_down & ~key_status.code_down;
+    up_new = ~code_down & key_status.code_down;
+
+    //HAL_KEY_TRACE("keyDbn: code_down=0x%X/0x%X down_new=0x%X up_new=0x%X event=%d", key_status.code_down, code_down, down_new, up_new, key_status.event);
+
+    // Check newly up keys
+    map = up_new;
+    index = 0;
+    while (map) {
+        if (map & (1 << index)) {
+            map &= ~(1 << index);
+            key_detected_callback((1 << index), HAL_KEY_EVENT_UP);
+            key_status.time_updown = time;
+        }
+        index++;
+    }
+
+    if (up_new) {
+        if (key_status.event == HAL_KEY_EVENT_LONGPRESS || key_status.event == HAL_KEY_EVENT_LONGLONGPRESS) {
+            // LongPress is finished when all of the LongPress keys are released
+            if ((code_down & key_status.code_ready) == 0) {
+                key_status.event = HAL_KEY_EVENT_NONE;
+            }
+        } else if (key_status.event == HAL_KEY_EVENT_DOWN) {
+            // Skip click handling if in LongPress
+            key_status.event = HAL_KEY_EVENT_UP;
+        }
+    }
+
+    if (key_status.event == HAL_KEY_EVENT_UP) {
+        //ASSERT(key_status.code_ready != HAL_KEY_CODE_NONE, "Bad code_ready");
+
+        if (key_status.code_click == HAL_KEY_CODE_NONE || key_status.code_click != key_status.code_ready) {
+            if (key_status.code_click != HAL_KEY_CODE_NONE) {
+                key_detected_callback(key_status.code_click, HAL_KEY_EVENT_CLICK + key_status.cnt_click);
+            }
+            key_status.code_click = key_status.code_ready;
+            key_status.cnt_click = 0;
+            key_status.time_click = time;
+        } else if (up_new && (up_new | key_status.code_down) == key_status.code_click) {
+            key_status.cnt_click++;
+            key_status.time_click = time;
+        }
+        if (time - key_status.time_click >= KEY_DOUBLECLICK_THRESHOLD || key_status.cnt_click >= MAX_KEY_CLICK_COUNT_CHARGING) {
+            key_detected_callback(key_status.code_click, HAL_KEY_EVENT_CLICK + key_status.cnt_click);
+            key_status.code_click = HAL_KEY_CODE_NONE;
+            key_status.cnt_click = 0;
+            key_status.event = HAL_KEY_EVENT_NONE;
+        }
+    }
+
+    // Update key_status.code_down
+    key_status.code_down = code_down;
+
+    // Check newly down keys and update key_status.code_ready
+    map = down_new;
+    index = 0;
+    while (map) {
+        if (map & (1 << index)) {
+            map &= ~(1 << index);
+            key_detected_callback((1 << index), HAL_KEY_EVENT_DOWN);
+            if (key_status.event == HAL_KEY_EVENT_NONE ||
+                    key_status.event == HAL_KEY_EVENT_DOWN ||
+                    key_status.event == HAL_KEY_EVENT_UP) {
+                key_status.code_ready = code_down;
+            }
+            key_status.time_updown = time;
+        }
+        index++;
+    }
+
+    if (down_new) {
+        if (key_status.event == HAL_KEY_EVENT_NONE || key_status.event == HAL_KEY_EVENT_UP) {
+            key_status.event = HAL_KEY_EVENT_DOWN;
+        }
+    }
+
+    // LongPress should be stopped if any key is released
+    if ((code_down & key_status.code_ready) == key_status.code_ready) {
+        if (key_status.event == HAL_KEY_EVENT_DOWN) {
+            if (time - key_status.time_updown >= KEY_LONGPRESS_THRESHOLD) {
+                key_status.cnt_repeat = 0;
+                key_status.event = HAL_KEY_EVENT_LONGPRESS;
+                key_detected_callback(key_status.code_ready, key_status.event);
+            }
+        } else if (key_status.event == HAL_KEY_EVENT_LONGPRESS || key_status.event == HAL_KEY_EVENT_LONGLONGPRESS) {
+            key_status.cnt_repeat++;
+            if (key_status.cnt_repeat == KEY_LONGPRESS_REPEAT_THRESHOLD / KEY_CHECKER_INTERVAL) {
+                key_status.cnt_repeat = 0;
+                key_detected_callback(key_status.code_ready, HAL_KEY_EVENT_REPEAT);
+            }
+            if (key_status.event == HAL_KEY_EVENT_LONGPRESS) {
+                if (time - key_status.time_updown >= KEY_LONGLONGPRESS_THRESHOLD) {
+                    key_status.event = HAL_KEY_EVENT_LONGLONGPRESS;
+                    key_detected_callback(key_status.code_ready, key_status.event);
+                }
+            }
+        }
+    }
+
+    if (key_status.event != HAL_KEY_EVENT_NONE) {
+        need_timer = true;
+    }
+
+    if (need_timer) {
+        hal_key_debounce_timer_restart();
+    } else {
+        hal_sys_wake_unlock(HAL_SYS_WAKE_LOCK_USER_KEY);
+    }
+}
+
 static void hal_key_debounce_handler(void *param)
 {
     uint32_t time;
@@ -1019,7 +1355,7 @@ static void hal_key_boot_handler(void *param)
 }
 #endif //CHECK_PWRKEY_AT_BOOT
 
-int hal_key_open(int checkPwrKey, int (* cb)(uint32_t, uint8_t))
+int hal_key_open(int checkPwrKey, bool isCharging,int (* cb)(uint32_t, uint8_t))
 {
     int nRet = 0;
     uint32_t lock;
@@ -1072,7 +1408,10 @@ int hal_key_open(int checkPwrKey, int (* cb)(uint32_t, uint8_t))
 #endif
 #endif
     {
-        debounce_timer = hwtimer_alloc(hal_key_debounce_handler, NULL);
+    		if(isCharging)
+			debounce_timer = hwtimer_alloc(hal_key_debounce_handler_in_charging, NULL);
+		else 
+        		debounce_timer = hwtimer_alloc(hal_key_debounce_handler, NULL);
         hal_key_enable_allint();
     }
 

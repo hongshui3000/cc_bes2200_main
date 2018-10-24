@@ -1134,7 +1134,7 @@ int app_init(void)
     app_audio_open();
     app_audio_manager_open();
     app_overlay_open();
-    if (app_key_open(true))
+    if (app_key_open(true,false))
     {
         nRet = -1;
         goto exit;
@@ -1317,7 +1317,7 @@ int app_init(void)
         btdrv_sleep_config(1);
         btdrv_hcioff();
 #endif
-		app_key_open(false);
+		app_key_open(false,true);
 
 //@20180301 by parker.wei touch key is also valid in charging state
 #if defined (__TOUCH_KEY__)&&defined(__PC_CMD_UART__)
@@ -1332,7 +1332,7 @@ int app_init(void)
     }
 
 
-    if (app_key_open(need_check_key)){
+    if (app_key_open(need_check_key,false)){
         nRet = -1;
         goto exit;
     }

@@ -183,7 +183,7 @@ int factory_suite_loop(void)
     list_init();
     app_os_init();
     app_battery_open();
-    if (app_key_open(false)){
+    if (app_key_open(false,false)){
         nRet = -1;
         goto exit;
     }
