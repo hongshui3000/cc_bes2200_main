@@ -916,7 +916,6 @@ void hfp_callback(HfChannel *Chan, HfCallbackParms *Info)
 	            }
 	            app_bt_device.hf_voice_en[chan_id_flag.id] = HF_VOICE_ENABLE;
 	        }
-            
 	        app_audio_manager_sendrequest(APP_BT_STREAM_MANAGER_START,BT_STREAM_VOICE,chan_id_flag.id,MAX_RECORD_NUM);
 
 	        if(MEC(activeCons) != 2){
@@ -926,6 +925,7 @@ void hfp_callback(HfChannel *Chan, HfCallbackParms *Info)
 	        }
 #else
 #ifdef __TWS_CALL_DUAL_CHANNEL__
+        osDelay(650);
         app_audio_manager_sendrequest(APP_BT_STREAM_MANAGER_START,BT_STREAM_VOICE,BT_DEVICE_ID_1,MAX_RECORD_NUM,1,0);
             
             if(app_tws_get_mode() == TWSMASTER)
