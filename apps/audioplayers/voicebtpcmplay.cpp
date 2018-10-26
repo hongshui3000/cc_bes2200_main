@@ -221,7 +221,7 @@ const CompexpConfig speech_tx_compexp_cfg = {
     .expand_slope = -0.5f,
     .attack_time = 0.01f,
     .release_time = 0.1f,
-    .makeup_gain = 12,
+    .makeup_gain = 15,
     .delay = 128,
 };
 #endif
@@ -264,10 +264,10 @@ const EqConfigRaw speech_tx_eq_cfg_8k = {
     .gain = -4.0049f,
     .num = 3,
     .param = {
-        {-1.854499f, 0.877615f, 0.933028f, -1.866057f, 0.933028f},  // 200HZ HP Q:1.2
-        {-0.939629f, 0.328836f, 1.000000f, -0.939629f, 0.328836f},	// default setting
-        {0.939629f, 0.328836f, 1.000000f, 0.939629f, 0.328836f},	// default setting
-    },
+            {0.1038f, -0.3604f, 1.0000f, 0.0000f, -1.0000f},
+            {-0.2644f, -0.6014f, 1.0000f, 0.0000f, -1.0000f},
+            {-1.9679f, 0.9682f, 1.0000f, -2.0000f, 1.0000f},
+        },
 };
 // A Weighting 16k
 const EqConfigRaw speech_tx_eq_cfg_16k = {
@@ -2402,8 +2402,8 @@ int voicebtpcm_pcm_audio_init(void)
     speech_tx_ec2_cfg.shwNlpResdPowThd = 100;
     speech_tx_ec2_cfg.shwNlpBandSortIdx = 0.75f;
     speech_tx_ec2_cfg.shwNlpBandSortIdxLow = 0.5f;
-    speech_tx_ec2_cfg.shwNlpTargetSupp = (3<<10);
-    speech_tx_ec2_cfg.shwNlpMinOvrd = (1<<11);
+    speech_tx_ec2_cfg.shwNlpTargetSupp = (5<<10);
+    speech_tx_ec2_cfg.shwNlpMinOvrd = (3<<11);
     speech_tx_ec2_cfg.shwNlpOvrdHigh = 31130; //(int16_t)(0.95 * 32768);
     speech_tx_ec2_cfg.shwNlpOvrdLow = 29490; //(int16_t)(0.9 * 32768);
 
