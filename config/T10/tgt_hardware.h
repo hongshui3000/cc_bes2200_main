@@ -107,9 +107,9 @@ extern const struct HAL_KEY_GPIOKEY_CFG_T cfg_hw_gpio_key_cfg[CFG_HW_GPIOKEY_NUM
 
 #ifdef __CUSTOMIZE_VERSION_BLE_NAME__
 #ifdef __TWS_CHANNEL_LEFT__
-#define BLE_DEFAULT_NAME  "BES-VERSION-0.5-L"
+#define BLE_DEFAULT_NAME  "BES-VERSION-0.6-L"
 #else 
-#define BLE_DEFAULT_NAME  "BES-VERSION-0.5-R"
+#define BLE_DEFAULT_NAME  "BES-VERSION-0.6-R"
 #endif
 #define BLE_MANU_DATA         "\xFF\xB0\x02\x00\x01"
 #define BLE_MANU_DATA_LEN	5
@@ -143,8 +143,8 @@ extern const int8_t cfg_aud_eq_sbc_band_settings[CFG_HW_AUD_EQ_NUM_BANDS];
 extern  int8_t cfg_hw_aud_eq_band_settings[CFG_HW_AUD_EQ_NUM_BANDS];
 
 //battery info
-#define APP_BATTERY_MIN_MV (3675)
-#define APP_BATTERY_PD_MV   (3450)
+#define APP_BATTERY_MIN_MV (3640)
+#define APP_BATTERY_PD_MV   (3500)
 
 #define APP_BATTERY_MAX_MV (4210)
 
