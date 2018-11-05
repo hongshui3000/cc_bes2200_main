@@ -20,7 +20,7 @@ extern "C" {
 #define CFG_SW_KEY_LPRESS_THRESH_MS         1000
 #define CFG_SW_KEY_LLPRESS_THRESH_MS        3000
 #define CFG_SW_KEY_DBLCLICK_THRESH_MS       450
-#define CFG_SW_KEY_CHECK_INTERVAL_MS        40
+#define CFG_SW_KEY_CHECK_INTERVAL_MS        20
 #endif
 
 #ifndef CFG_SW_KEY_LLPRESS_THRESH_MS
