@@ -550,6 +550,8 @@ int bt_sbc_player(enum PLAYER_OPER_T on, enum APP_SYSFREQ_FREQ_T freq,uint32_t t
         }
 #endif // __TWS__
 #endif // !EQ
+        freq = APP_SYSFREQ_104M;
+        TRACE("[][][]freq:%d\r\n",freq);
         app_sysfreq_req(APP_SYSFREQ_USER_APP_0, freq);
 
         memset(&stream_cfg, 0, sizeof(stream_cfg));
