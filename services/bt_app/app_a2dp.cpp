@@ -851,9 +851,9 @@ void avrcp_callback(AvrcpChannel *chnl, const AvrcpCallbackParms *Parms)
 //}
 //
 //Modified by ATX : cc_20181107:limit sbc 48k max bitpool
-#ifdef __SBC_48K_SAMPLE_RATE_DIFFRENT_BITPOOL__
-#ifndef BTA_AV_CO_SBC_MAX_BITPOOL_48K
-#define BTA_AV_CO_SBC_MAX_BITPOOL_48K   43
+#ifdef __DIFFRENT_BITPOOL_FOR_SBC_48K_SAMPLE_RATE__ 
+#ifndef BTA_AV_CO_SBC_MAX_BITPOOL_LIMITED 
+#define BTA_AV_CO_SBC_MAX_BITPOOL_LIMITED    45
 #endif
 #endif
 
@@ -904,13 +904,13 @@ const unsigned char a2dp_codec_elements[] =
 };
 
 //Modified by ATX : cc_20181107:limit sbc 48k max bitpool
-#ifdef __SBC_48K_SAMPLE_RATE_DIFFRENT_BITPOOL__
+#ifdef __DIFFRENT_BITPOOL_FOR_SBC_48K_SAMPLE_RATE__ 
 const unsigned char a2dp_codec_elements_limited[] =
 {
     A2D_SBC_IE_SAMP_FREQ_48 | A2D_SBC_IE_SAMP_FREQ_44 | A2D_SBC_IE_CH_MD_STEREO | A2D_SBC_IE_CH_MD_JOINT,
     A2D_SBC_IE_BLOCKS_16 | A2D_SBC_IE_BLOCKS_12 | A2D_SBC_IE_SUBBAND_8 | A2D_SBC_IE_ALLOC_MD_L,
     A2D_SBC_IE_MIN_BITPOOL,
-    BTA_AV_CO_SBC_MAX_BITPOOL_48K
+    BTA_AV_CO_SBC_MAX_BITPOOL_LIMITED
 };
 void a2dp_set_48k_max_bitpool(void);
 #endif
@@ -1160,7 +1160,7 @@ void a2dp_set_config_codec(AvdtpCodec *config_codec,const A2dpCallbackParms *Inf
         else
             config_codec->elements[2] = Info->p.codec->elements[2];
 //Modified by ATX : cc_20181107:limit sbc 48k max bitpool
-#ifdef __SBC_48K_SAMPLE_RATE_DIFFRENT_BITPOOL__
+#ifdef __DIFFRENT_BITPOOL_FOR_SBC_48K_SAMPLE_RATE__ 
         if(Info->p.codec->elements[3] >= a2dp_codec_elements_limited[3])
             config_codec->elements[3] = a2dp_codec_elements_limited[3];////[3]:MAX_BITPOOL
         else
@@ -1251,7 +1251,7 @@ void app_a2dp_buff_remaining_monitor(void)
 #endif
 
 //Modified by ATX : cc_20181107:limit sbc 48k max bitpool
-#ifdef __SBC_48K_SAMPLE_RATE_DIFFRENT_BITPOOL__
+#ifdef __DIFFRENT_BITPOOL_FOR_SBC_48K_SAMPLE_RATE__ 
 void a2dp_set_48k_max_bitpool(void)
 {
     TRACE("%s enter\r\n",__func__);
@@ -1356,7 +1356,7 @@ if (tws_a2dp_callback(Stream, Info))
 #endif
                 memcpy(app_bt_device.a2dp_codec_elements[stream_id_flag.id],Info->p.configReq->codec.elements,4);
                 //Modified by ATX : cc_20181107:limit sbc 48k max bitpool
-#ifdef __SBC_48K_SAMPLE_RATE_DIFFRENT_BITPOOL__
+#ifdef __DIFFRENT_BITPOOL_FOR_SBC_48K_SAMPLE_RATE__ 
                 if(Info->p.codec->elements[0] & A2D_SBC_IE_SAMP_FREQ_48)
                 {
                     if(Info->p.codec->elements[3]!=a2dp_codec_elements_limited[3])
@@ -1737,7 +1737,7 @@ if (tws_a2dp_callback(Stream, Info))
         case A2DP_EVENT_CODEC_INFO:
             TRACE("::A2DP_EVENT_CODEC_INFO %d\n", Info->event);
 			//Modified by ATX : cc_20181107:limit sbc 48k max bitpool
-#ifdef __SBC_48K_SAMPLE_RATE_DIFFRENT_BITPOOL__
+#ifdef __DIFFRENT_BITPOOL_FOR_SBC_48K_SAMPLE_RATE__ 
                 if(Info->p.codec->elements[0] & A2D_SBC_IE_SAMP_FREQ_48)
                 {
                     if(Info->p.codec->elements[3]!=a2dp_codec_elements_limited[3])
@@ -1991,10 +1991,6 @@ static bool check_aac_flag_legacy_condition(AvdtpStream *strm)
 bool avdtp_Get_aacEnable_Flag( BtRemoteDevice* remDev, AvdtpStream *strm)
 {
 #ifdef __FORCE_ENABLE_AAC__
-        U8 cc_elements[4];
-        memcpy(cc_elements,strm->codec->elements,4);
-        TRACE("cc_element:");
-        DUMP8("%02x ",cc_elements,4);
         return TRUE;
 #else
 #if defined(A2DP_AAC_ON)

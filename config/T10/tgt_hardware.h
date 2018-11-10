@@ -86,7 +86,7 @@ extern const uint16_t CFG_HW_ADCKEY_MAP_TABLE[CFG_HW_ADCKEY_NUMBER];
 #else
 #define BTA_AV_CO_SBC_MAX_BITPOOL  53
 #endif
-
+#define BTA_AV_CO_SBC_MAX_BITPOOL_LIMITED 	43
 
 //gpiokey define
 #define CFG_HW_GPIOKEY_NUM (2)
