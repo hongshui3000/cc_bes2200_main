@@ -850,6 +850,12 @@ void avrcp_callback(AvrcpChannel *chnl, const AvrcpCallbackParms *Parms)
 //    TRACE("avrcp_init...OK\n");
 //}
 //
+//Modified by ATX : cc_20181107:limit sbc 48k max bitpool
+#ifdef __SBC_48K_SAMPLE_RATE_DIFFRENT_BITPOOL__
+#ifndef BTA_AV_CO_SBC_MAX_BITPOOL_48K
+#define BTA_AV_CO_SBC_MAX_BITPOOL_48K   43
+#endif
+#endif
 
 #if defined(A2DP_AAC_ON)
 //Modified by ATX : Leon.He_20180622: move AAC bitrate into app_bt.h
@@ -896,6 +902,18 @@ const unsigned char a2dp_codec_elements[] =
     A2D_SBC_IE_MIN_BITPOOL,
     BTA_AV_CO_SBC_MAX_BITPOOL
 };
+
+//Modified by ATX : cc_20181107:limit sbc 48k max bitpool
+#ifdef __SBC_48K_SAMPLE_RATE_DIFFRENT_BITPOOL__
+const unsigned char a2dp_codec_elements_limited[] =
+{
+    A2D_SBC_IE_SAMP_FREQ_48 | A2D_SBC_IE_SAMP_FREQ_44 | A2D_SBC_IE_CH_MD_STEREO | A2D_SBC_IE_CH_MD_JOINT,
+    A2D_SBC_IE_BLOCKS_16 | A2D_SBC_IE_BLOCKS_12 | A2D_SBC_IE_SUBBAND_8 | A2D_SBC_IE_ALLOC_MD_L,
+    A2D_SBC_IE_MIN_BITPOOL,
+    BTA_AV_CO_SBC_MAX_BITPOOL_48K
+};
+void a2dp_set_48k_max_bitpool(void);
+#endif
 
 int store_sbc_buffer(unsigned char *buf, unsigned int len);
 int a2dp_audio_sbc_set_frame_info(int rcv_len, int frame_num);
@@ -1141,12 +1159,18 @@ void a2dp_set_config_codec(AvdtpCodec *config_codec,const A2dpCallbackParms *Inf
             config_codec->elements[2] = a2dp_codec_elements[2];////[2]:MIN_BITPOOL
         else
             config_codec->elements[2] = Info->p.codec->elements[2];
-
+//Modified by ATX : cc_20181107:limit sbc 48k max bitpool
+#ifdef __SBC_48K_SAMPLE_RATE_DIFFRENT_BITPOOL__
+        if(Info->p.codec->elements[3] >= a2dp_codec_elements_limited[3])
+            config_codec->elements[3] = a2dp_codec_elements_limited[3];////[3]:MAX_BITPOOL
+        else
+            config_codec->elements[3] = Info->p.codec->elements[3];
+#else 
         if(Info->p.codec->elements[3] >= a2dp_codec_elements[3])
             config_codec->elements[3] = a2dp_codec_elements[3];////[3]:MAX_BITPOOL
         else
             config_codec->elements[3] = Info->p.codec->elements[3];
-
+#endif
         ///////null set situation:
         if(config_codec->elements[3] < a2dp_codec_elements[2]){
             config_codec->elements[2] = a2dp_codec_elements[2];
@@ -1223,6 +1247,16 @@ void app_a2dp_buff_remaining_monitor(void)
 //        TRACE("!!!suspend HciBypassProcessReceivedData");
         HciBypassProcessReceivedDataExt(app_bt_bypass_hcireceiveddata_cb);
     }
+}
+#endif
+
+//Modified by ATX : cc_20181107:limit sbc 48k max bitpool
+#ifdef __SBC_48K_SAMPLE_RATE_DIFFRENT_BITPOOL__
+void a2dp_set_48k_max_bitpool(void)
+{
+    TRACE("%s enter\r\n",__func__);
+    a2dp_avdtpcodec.elements = (U8 *)&a2dp_codec_elements_limited;
+    A2DP_Register(&app_bt_device.a2dp_stream[0], &a2dp_avdtpcodec, NULL, a2dp_callback); 
 }
 #endif
 
@@ -1321,6 +1355,17 @@ if (tws_a2dp_callback(Stream, Info))
                 app_bt_device.codec_type[stream_id_flag.id] = AVDTP_CODEC_TYPE_SBC;
 #endif
                 memcpy(app_bt_device.a2dp_codec_elements[stream_id_flag.id],Info->p.configReq->codec.elements,4);
+                //Modified by ATX : cc_20181107:limit sbc 48k max bitpool
+#ifdef __SBC_48K_SAMPLE_RATE_DIFFRENT_BITPOOL__
+                if(Info->p.codec->elements[0] & A2D_SBC_IE_SAMP_FREQ_48)
+                {
+                    if(Info->p.codec->elements[3]!=a2dp_codec_elements_limited[3])
+                    {
+                        a2dp_set_48k_max_bitpool();
+                        app_bt_device.a2dp_codec_elements[stream_id_flag.id][3]=a2dp_codec_elements_limited[3];
+                    }
+                }
+#endif
             }
 #if defined(A2DP_AAC_ON)
             else if(Info->p.configReq->codec.codecType == AVDTP_CODEC_TYPE_MPEG2_4_AAC)
@@ -1691,6 +1736,14 @@ if (tws_a2dp_callback(Stream, Info))
             break;
         case A2DP_EVENT_CODEC_INFO:
             TRACE("::A2DP_EVENT_CODEC_INFO %d\n", Info->event);
+			//Modified by ATX : cc_20181107:limit sbc 48k max bitpool
+#ifdef __SBC_48K_SAMPLE_RATE_DIFFRENT_BITPOOL__
+                if(Info->p.codec->elements[0] & A2D_SBC_IE_SAMP_FREQ_48)
+                {
+                    if(Info->p.codec->elements[3]!=a2dp_codec_elements_limited[3])
+                        a2dp_set_48k_max_bitpool();
+                }
+#endif
             a2dp_set_config_codec(&setconfig_codec,Info);
 #ifdef __TWS__
             tws_set_channel_cfg(&setconfig_codec);
@@ -1938,6 +1991,10 @@ static bool check_aac_flag_legacy_condition(AvdtpStream *strm)
 bool avdtp_Get_aacEnable_Flag( BtRemoteDevice* remDev, AvdtpStream *strm)
 {
 #ifdef __FORCE_ENABLE_AAC__
+        U8 cc_elements[4];
+        memcpy(cc_elements,strm->codec->elements,4);
+        TRACE("cc_element:");
+        DUMP8("%02x ",cc_elements,4);
         return TRUE;
 #else
 #if defined(A2DP_AAC_ON)
