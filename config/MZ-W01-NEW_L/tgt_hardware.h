@@ -86,7 +86,7 @@ extern const uint16_t CFG_HW_ADCKEY_MAP_TABLE[CFG_HW_ADCKEY_NUMBER];
 #else
 #define BTA_AV_CO_SBC_MAX_BITPOOL  53
 #endif
-
+#define BTA_AV_CO_SBC_MAX_BITPOOL_LIMITED 	45
 
 //gpiokey define
 #define CFG_HW_GPIOKEY_NUM (2)
@@ -105,6 +105,16 @@ extern const struct HAL_KEY_GPIOKEY_CFG_T cfg_hw_gpio_key_cfg[CFG_HW_GPIOKEY_NUM
 #define CFG_HW_AUD_OUTPUT_PATH_SPEAKER_DEV (AUD_CHANNEL_MAP_CH0)
 #endif
 
+#ifdef __CUSTOMIZE_VERSION_BLE_NAME__
+#ifdef __TWS_CHANNEL_LEFT__
+#define BLE_DEFAULT_NAME  "BES-VERSION-0.6-L"
+#else 
+#define BLE_DEFAULT_NAME  "BES-VERSION-0.6-R"
+#endif
+#define BLE_MANU_DATA         "\xFF\xB0\x02\x00\x01"
+#define BLE_MANU_DATA_LEN	5
+#define GAP_ADV_DATA_LEN      (0x1F)
+#endif
 
 //bt config
 extern const char *BT_LOCAL_NAME;

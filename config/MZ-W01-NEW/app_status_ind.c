@@ -288,7 +288,7 @@ int app_status_indication_set(APP_STATUS_INDICATION_T status)
       break;
 	  
       case APP_STATUS_INDICATION_TESTMODE:
-	  case APP_STATUS_INDICATION_TESTMODE1:
+//	  case APP_STATUS_INDICATION_TESTMODE1:
           app_pwl_setup(APP_PWL_ID_0, APP_STATUS_INDICATION_CFG_GET(testmode));
           app_pwl_start(APP_PWL_ID_0);
       break;   
