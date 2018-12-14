@@ -94,17 +94,17 @@ const IIR_CFG_T audio_eq_iir_cfg = {
 //hardware dac iir eq
 const IIR_CFG_T audio_eq_hw_dac_iir_cfg = {
 #ifdef __TWS_CHANNEL_RIGHT__
-	.gain0 = -2.8,
-	.gain1 = -2.8,
+	.gain0 = -2.0,
+	.gain1 = -2.0,
 #else
- 	.gain0 = -2.8,
- 	.gain1 = -2.8,
+ 	.gain0 = -2.0,
+ 	.gain1 = -2.0,
 #endif
     .num = 3,
     .param = {
 		{IIR_TYPE_PEAK, 2.0,   80.0,   0.4},
 		{IIR_TYPE_PEAK, -4.0,   240.0,   0.9},
-		{IIR_TYPE_PEAK, -7.0,  7500.0,   4},
+		{IIR_TYPE_PEAK, -7.0,  8000.0,   4},
     }
 };
 
