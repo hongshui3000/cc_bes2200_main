@@ -796,6 +796,15 @@ static bool handle_func_key_doubleclick(void)
 			return true;
 	}
 #endif
+#ifdef __FUNCTION_KEY_DOUBLE_CLICK_FOR_SKIPR_
+#if defined(__DOUBLE_CLICK_FOR_LAST_NUMBER_REDDIAL_) || defined(__FUNCTION_KEY_DOUBLE_CLICK_FOR_VOICE_DIAL_)
+	if(app_bt_device.a2dp_play_pause_flag == 1)
+#endif
+	{
+		if (handle_a2dp_skipr()== true)
+			return true;
+	}
+#endif
 #if defined(__FUNCTION_KEY_DOUBLE_CLICK_FOR_VOICE_DIAL_) && defined(_SIRI_ENABLED__)
             if (handle_hfp_enable_siri()== true)
 		return true;
