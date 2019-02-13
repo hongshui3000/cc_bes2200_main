@@ -102,7 +102,7 @@ const IIR_CFG_T audio_eq_hw_dac_iir_cfg = {
 #endif
     .num = 3,
     .param = {
-		{IIR_TYPE_PEAK, 0,   80.0,   0.4},
+		{IIR_TYPE_PEAK, -5,   200.0,   0.7},
 		{IIR_TYPE_PEAK, 0,   240.0,   0.9},
 		{IIR_TYPE_PEAK, 0,  8000.0,   4},
     }
