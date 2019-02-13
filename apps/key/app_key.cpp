@@ -131,7 +131,7 @@ void app_key_handle_clear(void)
     list_clear(app_key_conifg.key_list);
 }
 
-int app_key_open(int checkPwrKey,bool isCharging)
+int app_key_open(int checkPwrKey)
 {
     APP_KEY_TRACE("%s %x",__func__, app_key_conifg.key_list);
 
@@ -143,7 +143,7 @@ int app_key_open(int checkPwrKey,bool isCharging)
 
     app_set_threadhandle(APP_MODUAL_KEY, app_key_handle_process);
 
-    return hal_key_open(checkPwrKey,isCharging, key_event_process);
+    return hal_key_open(checkPwrKey, key_event_process);
 }
 
 int app_key_close(void)

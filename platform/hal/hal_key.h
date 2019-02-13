@@ -20,7 +20,6 @@ extern "C" {
 #define CFG_SW_KEY_LPRESS_THRESH_MS         1000
 #define CFG_SW_KEY_LLPRESS_THRESH_MS        3000
 #define CFG_SW_KEY_DBLCLICK_THRESH_MS       450
-#define CFG_SW_KEY_CHECK_INTERVAL_MS        20
 #endif
 
 #ifndef CFG_SW_KEY_LLPRESS_THRESH_MS
@@ -110,7 +109,7 @@ struct HAL_KEY_GPIOKEY_CFG_T {
     enum HAL_KEY_GPIOKEY_VAL_T key_down;
 };
 
-int hal_key_open(int checkPwrKey, bool isCharging,int (* cb)(uint32_t, uint8_t));
+int hal_key_open(int checkPwrKey, int (* cb)(uint32_t, uint8_t));
 
 enum HAL_KEY_EVENT_T hal_key_read_status(enum HAL_KEY_CODE_T code);
 

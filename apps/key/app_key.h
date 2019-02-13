@@ -68,7 +68,7 @@ typedef struct {
     void *param;
 } APP_KEY_HANDLE;
 
-int app_key_open(int checkPwrKey,bool isCharging);
+int app_key_open(int checkPwrKey);
 
 int app_key_close(void);
 

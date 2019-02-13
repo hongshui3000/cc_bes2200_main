@@ -24,7 +24,7 @@ extern "C" {
 #define CODEC_PLAYBACK_BIT_DEPTH            18
 #endif
 
-#define CODEC_TX_PA_GAIN_DEFAULT			-1
+#define CODEC_TX_PA_GAIN_DEFAULT            -1
 
 enum AUD_STREAM_USE_DEVICE_T{
     AUD_STREAM_USE_EXT_CODEC = 0,
