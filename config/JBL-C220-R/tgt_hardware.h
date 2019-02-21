@@ -124,6 +124,7 @@ extern uint8_t bt_addr[6];
 #define ANALOG_ADC_A_GAIN_DB (30)
 #define ANALOG_ADC_B_GAIN_DB (30)
 
+#define MAX_TWS_INQUIRY_TIMES (5)
 
 //5db per step max is 7
 #define ANALOG_ADC_GAIN1    0x5

@@ -71,7 +71,7 @@ int a2dp_volume_set(U8 vol);
 extern int get_a2dp_volume_level(U8 vol);
 
 //Modified by ATX : Parke.Wei_20180316  for peer slave get the master state;
-#ifdef _PROJ_2000IZ_C003__
+#ifdef _PROJ_2000IZ_C003_
 APP_STATUS_INDICATION_T remote_master_state;
 #endif
 
@@ -343,7 +343,7 @@ void tws_spp_parse_cmd(uint8_t* cmd, uint8_t len)
         }
             break;
 		//Modified by ATX : Parke.Wei_20180316
-#ifdef _PROJ_2000IZ_C003__
+#ifdef _PROJ_2000IZ_C003_
 		case TWS_SPP_CMD_UPDATE_PEER_STATE:
         {
             TWS_SPP_UPDATE_PEER_STATE  peer_state;
@@ -503,7 +503,7 @@ void tws_spp_parse_rsp(uint8_t* rsp, uint8_t len)
             break;    
 
 			//Modified by ATX : parker.wei_20180316
-#ifdef _PROJ_2000IZ_C003__
+#ifdef _PROJ_2000IZ_C003_
 		case TWS_SPP_CMD_UPDATE_PEER_STATE:
 			if(s_rsp.status == 0){
 #if 0                
@@ -783,7 +783,7 @@ void tws_spp_voice_report(APP_STATUS_INDICATION_T id)
 }
 
 
-#ifdef _PROJ_2000IZ_C003__
+#ifdef _PROJ_2000IZ_C003_
 void tws_spp_update_peer_state(uint8_t state)
 {
     TWS_SPP_UPDATE_PEER_STATE peer_state;
@@ -850,7 +850,7 @@ void  btapp_process_spp_write(uint16_t cmdid,uint32_t param,uint8_t *ptr,uint32_
 			tws_spp_voice_report((APP_STATUS_INDICATION_T)param);	
             break;
 //Modified by ATX : Parke.Wei_20180316	
-#ifdef _PROJ_2000IZ_C003__
+#ifdef _PROJ_2000IZ_C003_
 		case TWS_SPP_CMD_UPDATE_PEER_STATE:
 			tws_spp_update_peer_state(param);
             break;

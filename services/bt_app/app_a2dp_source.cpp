@@ -644,7 +644,7 @@ static void _find_a2dp_sink_peer_device_start(void)
 
     again:  
 //Modified by ATX : Leon.He_20171123	
-#ifdef __LIAC_FOR_TWS_PAIRING__
+#ifdef _LIAC_TWS_PAIR_
         stat = ME_Inquiry(BT_IAC_LIAC, 30, 0);
 #else
         stat = ME_Inquiry(BT_IAC_GIAC, 30, 0);

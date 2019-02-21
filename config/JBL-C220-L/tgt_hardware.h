@@ -124,6 +124,10 @@ extern uint8_t bt_addr[6];
 #define ANALOG_ADC_A_GAIN_DB (30)
 #define ANALOG_ADC_B_GAIN_DB (30)
 
+#define MAX_TWS_INQUIRY_TIMES 	5
+#define PEER_INQUIRE_TIMEOUT	2//Modified by ATX : Leon.He_20190220: reduce peer inquire timeout from 3s to 2s for auto pairing.
+#define CONNECTING_SLAVE_TIMEOUT_RECONNECT_IN_MS                      (10000)
+#define APP_TWS_POSTPONE_TO_START_TWS_SEARCHING_TIMEOUT_IN_MS         4000
 
 //5db per step max is 7
 #define ANALOG_ADC_GAIN1    0x5

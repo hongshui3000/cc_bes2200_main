@@ -227,7 +227,7 @@ void tws_ctrl_thread(const void *arg)
 				 }						   
 				 break;
 			//Modified by ATX : Parke.Wei_20180316
-#ifdef _PROJ_2000IZ_C003__
+#ifdef _PROJ_2000IZ_C003_
 			 case TWS_CTRL_PLAYER_UPDATE_PEER_STATE:
 				  if(tws.tws_mode == TWSMASTER){	  
 						 app_bt_SPP_Write_Cmd(TWS_SPP_CMD_UPDATE_PEER_STATE,msg_p->arg,NULL,0);

@@ -15,7 +15,7 @@
 #define TWS_SPP_CMD_SET_A2DP_VOLUME  (0x104)
 #define TWS_SPP_CMD_RING_SYNC  (0x105)
 //@20180304 by parker.wei 
-#ifdef _PROJ_2000IZ_C003__
+#ifdef _PROJ_2000IZ_C003_
 #define TWS_SPP_CMD_UPDATE_PEER_STATE (0X110)// by parker.wei NOTIFY THE SLAVE ABOUT THE AG state
 #endif
 //Modified by ATX : parker.wei_20180306
@@ -67,7 +67,7 @@ typedef struct _TWS_SPP_SET_TWS_SYSTEM_VOLUME{
 }__attribute__((packed)) TWS_SPP_SET_TWS_SYSTEM_VOLUME;
 
 //Modified by ATX : Parke.Wei_20180316
-#ifdef _PROJ_2000IZ_C003__
+#ifdef _PROJ_2000IZ_C003_
 typedef struct _TWS_SPP_UPDATE_PEER_STATE{
     uint16_t cmd_id;
     uint8_t state;
@@ -113,7 +113,7 @@ void tws_spp_notify_key(uint32_t key);
 
 void tws_spp_set_a2dp_vol(uint8_t vol);
 void  btapp_process_spp_write(uint16_t cmdid,uint32_t param,uint8_t *ptr,uint32_t len);
-#ifdef _PROJ_2000IZ_C003__
+#ifdef _PROJ_2000IZ_C003_
 void tws_spp_update_peer_state(uint8_t state);
 #endif
 

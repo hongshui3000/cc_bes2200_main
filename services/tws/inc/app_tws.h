@@ -746,8 +746,8 @@ void tws_sync_remote_lock_time_from_a2dp_buffer(void * buf);
 void tws_store_remote_lock_time(AvdtpMediaHeader header);
 #endif
 
-
-
+//Modified by ATX :KSW
+void app_start_tws_slave_con_phone_timer(void);
 void tws_ctrl_thread_init(void);
 
 

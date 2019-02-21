@@ -42,8 +42,8 @@ extern "C" {
 
 extern struct BT_DEVICE_T  app_bt_device;
 
-//@20180304 by parkwe.wei for _PROJ_2000IZ_C003__ UI
-#ifdef _PROJ_2000IZ_C003__
+//@20180304 by parkwe.wei for _PROJ_2000IZ_C003_ UI
+#ifdef _PROJ_2000IZ_C003_
 static bool peer_right_in=false;
 static bool peer_left_in=false;
 #endif
@@ -693,8 +693,8 @@ void touch_bt_key_send(uint16_t code, uint16_t event)
 
 #endif
 
-//@20180304 by parkwe.wei for _PROJ_2000IZ_C003__ UI
-#ifdef _PROJ_2000IZ_C003__
+//@20180304 by parkwe.wei for _PROJ_2000IZ_C003_ UI
+#ifdef _PROJ_2000IZ_C003_
 bool get_peer_right_in_state(void)
 {
 	return peer_right_in;

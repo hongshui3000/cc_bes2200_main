@@ -109,26 +109,35 @@ static osTimerId app_tws_timer = NULL;
 static uint8_t tws_find_process=0;
 static uint8_t tws_inquiry_count=0;
 
+//ATX:KSW20190124
+#ifdef _RSSI_FOR_TWS_PAIR_
+#define TWS_INQUIRY_RSSI_THREHOLD       (-65)
+#endif
+
 //Modified by ATX : Leon.He_20170206: support customized TWS times value
-#ifdef _PROJ_2000IZ_C001__
+#ifdef _PROJ_2000IZ_C001_
 #define MAX_TWS_INQUIRY_TIMES   	10 //Approximate 1Mins
 #endif
 
 //Modified by ATX : Parker.Wei_20180324
-#ifdef _PROJ_2000IZ_C002__
+#ifdef _PROJ_2000IZ_C002_
 #define MAX_TWS_INQUIRY_TIMES   	21 //Approximate 2Mins
 #endif
 
-#ifdef _PROJ_2000IZ_C005__
+#ifdef _PROJ_2000IZ_C005_
+#ifndef MAX_TWS_INQUIRY_TIMES
 #define MAX_TWS_INQUIRY_TIMES   	10 //Approximate 1Mins
+#endif
 #endif
 
 #ifndef MAX_TWS_INQUIRY_TIMES
 #define MAX_TWS_INQUIRY_TIMES        10
 #endif
 
-//Modified by ATX : Leon.He_20171227: Macro for adjusting inquire timeout
+//Modified by ATX : Leon.He_20190220: Macro for adjusting inquire timeout
+#ifndef PEER_INQUIRE_TIMEOUT
 #define PEER_INQUIRE_TIMEOUT	3
+#endif
 
 static BtHandler me_handler;
 
@@ -155,7 +164,7 @@ static void tws_slave_reconnect_timer_callback(void const *param)
 }
 osTimerDef (APP_TWS_SLAVE_RECONNECT_TIMER, tws_slave_reconnect_timer_callback);
 static osTimerId POSSIBLY_UNUSED app_tws_slave_reconnect_timer = NULL;
-#define APP_TWS_RECONNECT_TIMEOUT	12000
+#define APP_TWS_RECONNECT_TIMEOUT	6000
 
 static void app_start_tws_slave_reconnect_timer(void)
 {
@@ -410,7 +419,7 @@ void master_ble_scan_timer_callback(void const *n) {
     TRACE("%s master_ble_scan_timer fired", __func__);
     if (app_tws_ble_reconnect.scan_func)
         app_tws_ble_reconnect.scan_func(APP_TWS_CLOSE_BLE_SCAN);
-    
+
     app_bt_send_request(APP_BT_REQ_CUSTOMER_CALL, 0 ,0, (uint32_t)app_tws_reconnect_phone_start);
 }
 osTimerDef(master_ble_scan_timer, master_ble_scan_timer_callback);
@@ -618,6 +627,8 @@ void a2dp_callback_tws_source(A2dpStream *Stream, const A2dpCallbackParms *Info)
             TWS_SET_STREAM_STATE(TWS_STREAM_OPEN)
 #endif
             twsd->tws_mode = TWSMASTER;
+			//ATX:KSW20190126					
+			app_bt_accessmode_set(BAM_CONNECTABLE_ONLY);
             app_tws_set_tws_conhdl(Stream->device->cmgrHandler.remDev->hciHandle);
 #ifdef __TWS_OUTPUT_POWER_FIX_SEPARATE__            
             *(volatile uint32_t *)(0xd02101a4+btdrv_conhdl_to_linkid(Stream->device->cmgrHandler.remDev->hciHandle)*96) =6;
@@ -741,7 +752,11 @@ void a2dp_callback_tws_source(A2dpStream *Stream, const A2dpCallbackParms *Info)
             if (!app_tws_reconnect_slave_process(A2DP_EVENT_STREAM_OPEN,0)){
                 if(twsd->mobile_sink.connected == false  && tws_reconnect_mobile == 0)
                 {
-                    app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BT_DEFAULT_ACCESS_MODE_PAIR,0,0);
+#ifdef _RCNT_BT_AF_TWS_CONNECT_FIRST_	
+					app_bt_send_request(APP_BT_REQ_CUSTOMER_CALL, 0 ,0, (uint32_t)app_tws_reconnect_phone_start);
+#else					
+                	app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BT_DEFAULT_ACCESS_MODE_PAIR,0,0);
+#endif
 #ifdef __TWS_RECONNECT_USE_BLE__
                     TRACE("%s start_pare_timer", __func__);
 #if 0//Modified by ATX : Parker.Wei£¬ handle pairing time in app_bt_handle_process	
@@ -1948,7 +1963,7 @@ static void app_tws_inquiry_timeout_handler(void const *param)
     TWSCON_DBLOG("app_tws_inquiry_timeout_handler\n");
 
 //Modified by ATX : Leon.He_20171227: support liac tws pairing
-#ifdef __LIAC_FOR_TWS_PAIRING__
+#ifdef _LIAC_TWS_PAIR_
     ME_Inquiry(BT_IAC_LIAC, PEER_INQUIRE_TIMEOUT, 0);
 #else
     ME_Inquiry(BT_IAC_GIAC, PEER_INQUIRE_TIMEOUT, 0);
@@ -1990,6 +2005,15 @@ static void bt_call_back(const BtEvent* event)
                 {
                     break;
                 }            
+
+//Modified by ATX :Leon.He_20190220: disable rssi, avoid failed to tws pair on head. enable it later.
+#if 0//def _RSSI_FOR_TWS_PAIR_
+                ///check RSSI 
+                if(MEC(btEvent).p.inqResult.rssi < TWS_INQUIRY_RSSI_THREHOLD)
+                {
+                    break;
+                }  
+#endif				
                 ////if rssi event is eir,so find name derictly
                 if(event->p.inqResult.inqMode == INQ_MODE_EXTENDED)
                 {
@@ -1997,8 +2021,12 @@ static void bt_call_back(const BtEvent* event)
                     device_name_len = ME_GetExtInqData(eir,0x09,device_name,sizeof(device_name));
                     if(device_name_len>0)
                     {
+#ifndef __DISABLE_ONLY_THE_SAME_BT_NAME_FOR_TWSCONNECT__		                                         
                         ////if name is the same as the local name so we think the device is the tws slave
                         if(!memcmp(device_name,BT_LOCAL_NAME,device_name_len))
+#else
+						if(1)
+#endif
                         {
                             BtStatus status;
                             BtDeviceRecord record;
@@ -2056,8 +2084,16 @@ static void bt_call_back(const BtEvent* event)
            if(tws_inquiry_count>=MAX_TWS_INQUIRY_TIMES)
             {
                 tws_app_stop_find();
-                //Modified by ATX :Parker.Wei TWS inquiry timeout and enter pair mode
-				app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BT_DEFAULT_ACCESS_MODE_PAIR, 0,0);					
+//ATX:KSW20190124			
+#ifdef _RCNT_BT_AF_TWS_INQUIRE_TIMEOUT_	
+				if (app_tws_ble_reconnect.scan_func)
+					app_tws_ble_reconnect.scan_func(APP_TWS_OPEN_BLE_SCAN);
+
+				app_bt_send_request(APP_BT_REQ_CUSTOMER_CALL, 0 ,0, (uint32_t)app_tws_reconnect_phone_start);
+#else
+            	//Modified by ATX :Parker.Wei TWS inquiry timeout and enter pair mode
+				app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BT_DEFAULT_ACCESS_MODE_PAIR, 0,0);
+#endif	
                 return;
             }                
 
@@ -2071,7 +2107,7 @@ static void bt_call_back(const BtEvent* event)
                 if(rand_delay == 0)
                 {
 //Modified by ATX : Leon.He_20171227: support liac tws pairing
-#ifdef __LIAC_FOR_TWS_PAIRING__
+#ifdef _LIAC_TWS_PAIR_
                 	ME_Inquiry(BT_IAC_LIAC, PEER_INQUIRE_TIMEOUT, 0);
 #else
                 	ME_Inquiry(BT_IAC_GIAC, PEER_INQUIRE_TIMEOUT, 0);
@@ -2106,8 +2142,13 @@ static void bt_call_back(const BtEvent* event)
                if(tws_inquiry_count>=MAX_TWS_INQUIRY_TIMES)
                 {
                     tws_app_stop_find();
+//ATX:KSW20190124					
+#ifdef _RCNT_BT_AF_TWS_INQUIRE_TIMEOUT_
+					app_bt_send_request(APP_BT_REQ_CUSTOMER_CALL, 0 ,0, (uint32_t)app_tws_reconnect_phone_start);
+#else
                     //Modified by ATX :Parker.Wei TWS inquiry timeout and enter pair mode
 				    app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BT_DEFAULT_ACCESS_MODE_PAIR, 0,0);	
+#endif
                     return;
                 }             
                 uint8_t rand_delay = rand() % 5;
@@ -2115,7 +2156,7 @@ static void bt_call_back(const BtEvent* event)
                 if(rand_delay == 0)
                 {
 //Modified by ATX : Leon.He_20171227: support liac tws pairing
-#ifdef __LIAC_FOR_TWS_PAIRING__
+#ifdef _LIAC_TWS_PAIR_
                 	ME_Inquiry(BT_IAC_LIAC, PEER_INQUIRE_TIMEOUT, 0);
 #else
                 	ME_Inquiry(BT_IAC_GIAC, PEER_INQUIRE_TIMEOUT, 0);
@@ -2185,7 +2226,7 @@ void find_tws_peer_device_start(void)
     again:  
         TWSCON_DBLOG("\n%s %d\n",__FUNCTION__,__LINE__);
 //Modified by ATX : Leon.He_20171227: support liac tws pairing
-#ifdef __LIAC_FOR_TWS_PAIRING__
+#ifdef _LIAC_TWS_PAIR_
         stat = ME_Inquiry(BT_IAC_LIAC, PEER_INQUIRE_TIMEOUT, 0);
 #else
         stat = ME_Inquiry(BT_IAC_GIAC, PEER_INQUIRE_TIMEOUT, 0);
@@ -2489,9 +2530,51 @@ void app_start_tws_slave_con_phone_timer(void)
     osTimerStart(tws_slave_con_phone.TimerID, APP_START_TWS_SLAVE_CON_PHONE_MS);
 }
 
+//Modified by ATX:KSW20190124
+#ifdef _TWS_PAIR_SUPERVISOR_
+#ifndef APP_TWS_POSTPONE_TO_START_TWS_SEARCHING_TIMEOUT_IN_MS
+#define APP_TWS_POSTPONE_TO_START_TWS_SEARCHING_TIMEOUT_IN_MS         4000
+#endif
+void app_tws_postpone_to_start_tws_searching(void const *param)
+{
+	if(app_tws_mode_is_master() == false)
+		app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BT_DEFAULT_ACCESS_MODE_PAIR,2,0);
+}
 
+osTimerDef(APP_TWS_POSTPONE_TO_START_TWS_SEARCHING_TIMER, app_tws_postpone_to_start_tws_searching);
+static osTimerId POSSIBLY_UNUSED app_tws_postpone_to_start_tws_searching_timer = NULL;
+
+static void app_tws_postpone_to_start_tws_searching_during_bt_reconnect(void)
+{
+    TRACE("%s",__func__);
+	if (app_tws_postpone_to_start_tws_searching_timer == NULL)
+		app_tws_postpone_to_start_tws_searching_timer = osTimerCreate(osTimer(APP_TWS_POSTPONE_TO_START_TWS_SEARCHING_TIMER), osTimerOnce, NULL);
+	osTimerStop(app_tws_postpone_to_start_tws_searching_timer);
+	osTimerStart(app_tws_postpone_to_start_tws_searching_timer,APP_TWS_POSTPONE_TO_START_TWS_SEARCHING_TIMEOUT_IN_MS);
+}
+#endif
+
+
+//ATX:KSW20190124
+#ifdef _AUTO_TWS_PAIR_WITH_PDL_EMPTY_
+void app_force_tws_pairing_after_sys_startup(void)
+{
+#if defined (_TWS_MASTER_FIXED_)
+	TRACE("!!!go to tws searching\n");
+	app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BT_DEFAULT_ACCESS_MODE_PAIR, 2,0);
+#elif defined (_TWS_SLAVE_FIXED_)
+	TRACE("!!!go to tws pairing\n");
+	app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BT_DEFAULT_ACCESS_MODE_TWS_PAIR, 0,0);
+#endif
+}
+#endif
 
 extern "C" void MeWriteBtPagescan_Type(uint8_t scan_type);
+
+//Modified by ATX : Leon.He_2019020
+#ifndef CONNECTING_SLAVE_TIMEOUT_RECONNECT_IN_MS
+#define CONNECTING_SLAVE_TIMEOUT_RECONNECT_IN_MS                        (10000)
+#endif
 
 void app_tws_start_reconnct(struct tws_mode_t *tws_mode)
 {
@@ -2506,17 +2589,22 @@ void app_tws_start_reconnct(struct tws_mode_t *tws_mode)
         if (app_tws_ble_reconnect.scan_func) {
             if (app_tws_ble_reconnect.master_ble_scan_timerId) {
                 status = app_tws_ble_reconnect.scan_func(APP_TWS_OPEN_BLE_SCAN);
-				osTimerStart(app_tws_ble_reconnect.master_ble_scan_timerId, 6000); //Modified by ATX : Paker.Wei_20180103: force to start reconnect timer,avoid sometimes not auto reconnect phone
-                TRACE("app_tws_ble_reconnect scan_func , status: %d", status);
-            }
+				osTimerStart(app_tws_ble_reconnect.master_ble_scan_timerId, CONNECTING_SLAVE_TIMEOUT_RECONNECT_IN_MS); //Modified by ATX : Paker.Wei_20180103: force to start reconnect timer,avoid sometimes not auto reconnect phone
+                TRACE("app_tws_ble_reconnect scan_func , status: %d", status);       
+			}
+
+#ifdef _TWS_PAIR_SUPERVISOR_
+			app_tws_postpone_to_start_tws_searching_during_bt_reconnect();
+#endif
+
 #if 0//Modified by ATX : Paker.Wei_20180103: force to start reconnect timer,avoid sometimes not auto reconnect phone
             if (status == BT_STATUS_SUCCESS) {
-                osTimerStart(app_tws_ble_reconnect.master_ble_scan_timerId, 6000);
+                osTimerStart(app_tws_ble_reconnect.master_ble_scan_timerId, CONNECTING_SLAVE_TIMEOUT_RECONNECT_IN_MS);
             }
 #endif
         }
     }
-#if  !defined (__MASTER_AUTO_PAIRING_WHEN_FAILED_TO_RECONNECT__) || !defined (__MASTER_AUTO_TWS_SEARCHING_WITH_EMPTY_PDL__)
+#if  !defined (__MASTER_AUTO_PAIRING_WHEN_FAILED_TO_RECONNECT__) || !defined (__AUTO_TWS_SEARCHING_WITH_PDL_EMPTY_)
 //Modified by ATX : Leon.He_20171219:master shouldn't be slave, workaround, to force reconnect.
     else if(tws_mode->mode == TWSSLAVE)
     {
@@ -2533,6 +2621,11 @@ void app_tws_start_reconnct(struct tws_mode_t *tws_mode)
 //            *((volatile uint32_t *)0XD02201B0) |= (1 << 15);  ////ble first always
             app_bt_accessmode_set(BT_DEFAULT_ACCESS_MODE_NCON);
 
+//Modified by ATX :KSW20190124
+#ifdef _TWS_PAIRING_AND_RCNT_SIMULTANEOUSLY_
+			app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BT_DEFAULT_ACCESS_MODE_TWS_PAIR, 0,0);
+#endif
+
 //Modified by ATX : Leon.He_20170323: prohibit slave connect phone timer.
 #ifdef __TWS_SLAVE_RECONNECT_MOBILE__
             app_start_tws_slave_con_phone_timer();
@@ -2546,7 +2639,12 @@ void app_tws_start_reconnct(struct tws_mode_t *tws_mode)
 #endif//__MASTER_AUTO_PAIRING_WHEN_FAILED_TO_RECONNECT__
     else
     {
+//ATX:KSW20190124    
+#ifdef _AUTO_TWS_PAIR_WITH_PDL_EMPTY_
+		app_force_tws_pairing_after_sys_startup();
+#else
         app_bt_profile_connect_manager_opening_reconnect();
+#endif
     }
 }
 

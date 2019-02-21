@@ -522,6 +522,15 @@ static void app_bt_golbal_handle(const BtEvent *Event)
                 btdrv_clean_slave_afh();
             }
 #endif
+
+//Modified by ATX :KSW
+#if defined( __TWS_SLAVE_RECONNECT_MOBILE_WHEN_TWS_DISCONNECT__) && defined(__TWS_SLAVE_RECONNECT_MOBILE__)
+			if((nvrecord_env->tws_mode.mode ==TWSSLAVE ) &&(MEC(activeCons) == 0))
+			{
+				app_start_tws_slave_con_phone_timer();
+			}	
+#endif
+
             TRACE("tws mode=%x",app_tws_get_mode());
             DUMP8("%02x ",app_tws_get_peer_bdaddr(),6);
             DUMP8("%02x ",Event->p.disconnect.remDev->bdAddr.addr,6);
@@ -532,7 +541,7 @@ static void app_bt_golbal_handle(const BtEvent *Event)
 				//@20180705 by parker.wei Fixed single master has no voice when in call active
                  	app_tws_set_tws_conhdl(0);	
 					
-#if defined(_PROJ_2000IZ_C003__) && defined(__TWS_CHANNEL_RIGHT__)
+#if defined(_PROJ_2000IZ_C003_) && defined(__TWS_CHANNEL_RIGHT__)
   				set_peer_left_in_state(false);//@20180304 by parker.wei tws disconnected,the in-ear state clear;              
 #endif
 
@@ -704,7 +713,13 @@ static void app_bt_golbal_handle(const BtEvent *Event)
             nv_record_env_get(&nvrecord_env);
 	     	incoming_device_name = (char *)(Event->p.meToken->p.name.io.out.name);
             TRACE("name result =%s\n",incoming_device_name);
-            if (!strcmp(incoming_device_name,BT_LOCAL_NAME)  ){ //find peer device
+#ifndef __DISABLE_ONLY_THE_SAME_BT_NAME_FOR_TWSCONNECT__			
+			if (!strcmp(incoming_device_name,BT_LOCAL_NAME) )
+#else
+			if((Event->p.meToken->p.name.bdAddr.addr[5]== bt_addr[5]) && (Event->p.meToken->p.name.bdAddr.addr[4]== bt_addr[4]) &&
+					(Event->p.meToken->p.name.bdAddr.addr[3]== bt_addr[3]))
+#endif	
+			{ //find peer device
                 TRACE("set tws to slave");
                 DUMP8("%02x ",Event->p.meToken->p.name.bdAddr.addr,6);
 				memcpy(app_tws_get_peer_bdaddr(),&(Event->p.meToken->p.name.bdAddr.addr), sizeof(BT_BD_ADDR));
@@ -1436,8 +1451,8 @@ void app_bt_profile_connect_manager_opening_reconnect(void)
     if (ret == 0) {
 		
 		TRACE("!!!PDL is 0\n");    
-#ifdef __EARPHONE_STAY_BOTH_SCAN__
-#if defined (__MASTER_AUTO_TWS_SEARCHING_WITH_EMPTY_PDL__)
+
+#if defined (__AUTO_TWS_SEARCHING_WITH_PDL_EMPTY_)
 //Modified by ATX : Leon.He_20171130: for pending tws searching
 		TRACE("!!!go to tws searching\n");
 		app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BT_DEFAULT_ACCESS_MODE_PAIR, 2,0);
@@ -1445,11 +1460,12 @@ void app_bt_profile_connect_manager_opening_reconnect(void)
 		TRACE("!!!go to tws pairing\n");
 		app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BT_DEFAULT_ACCESS_MODE_TWS_PAIR, 0,0);
 #else
+#ifdef __EARPHONE_STAY_BOTH_SCAN__
 		TRACE("!!!go to pairing\n");
 		app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BT_DEFAULT_ACCESS_MODE_PAIR, 0,0);
-#endif
 #else
 		app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BAM_CONNECTABLE_ONLY,0,0);
+#endif
 #endif
         OS_UnlockStack();
 
@@ -2160,3 +2176,4 @@ bool app_bt_mobile_hasConnected(void)
 	return false;
 
 }
+

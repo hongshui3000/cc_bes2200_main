@@ -8,14 +8,14 @@
 extern "C" {
 #endif
 
-#ifdef _PROJ_2000IZ_C001__
+#ifdef _PROJ_2000IZ_C001_
 #define CFG_SW_KEY_REPEAT_THRESH_MS         700
 #define CFG_SW_KEY_LPRESS_THRESH_MS         500
 #define CFG_SW_KEY_LLPRESS_THRESH_MS        3000
 #define CFG_SW_KEY_DBLCLICK_THRESH_MS       450
 #endif
 
-#ifdef _PROJ_2000IZ_C005__
+#ifdef _PROJ_2000IZ_C005_
 #define CFG_SW_KEY_REPEAT_THRESH_MS         700
 #define CFG_SW_KEY_LPRESS_THRESH_MS         1000
 #define CFG_SW_KEY_LLPRESS_THRESH_MS        3000

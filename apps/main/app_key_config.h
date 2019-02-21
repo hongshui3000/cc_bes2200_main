@@ -9,7 +9,7 @@ Copyright (c) ATX ShenZhen, Ltd.
 #ifdef __HALL_CONTROL_POWER_
 #if defined(__SINGLE_KEY_)
 #define KEY_HANDLE_NUM		7
-#elif defined(_PROJ_2000IZ_C002__)||defined(_PROJ_2000IZ_C003_KEY_) //Modified by ATX : Parke.Wei_20180326
+#elif defined(_PROJ_2000IZ_C002_)||defined(_PROJ_2000IZ_C003_KEY_) //Modified by ATX : Parke.Wei_20180326
 #define KEY_HANDLE_NUM		10
 #elif defined(__SINGLE_TOUCH_SIMPLE_MODE_)
 #define KEY_HANDLE_NUM		5

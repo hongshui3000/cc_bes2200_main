@@ -62,7 +62,7 @@ extern bool	manual_enter_pair_mode;
 
 
 //Modified by ATX : Parke.Wei_20180316  for peer slave get the master state;
-#ifdef _PROJ_2000IZ_C003__
+#ifdef _PROJ_2000IZ_C003_
 extern APP_STATUS_INDICATION_T remote_master_state;
 #endif
 extern void app_otaMode_enter(APP_KEY_STATUS *status, void *param);
@@ -342,7 +342,7 @@ static bool handle_a2dp_play(void)
 }
 
 //Modified by ATX : Parke.Wei_20180316
-#ifdef _PROJ_2000IZ_C003__
+#ifdef _PROJ_2000IZ_C003_
 static bool handle_master_Weared(void)
 {
     BtAccessibleMode mode;
@@ -1004,14 +1004,14 @@ static bool handle_func_key_tripleclick(void)
     }
         
 #endif
-//@20180304 by parker.wei for _PROJ_2000IZ_C003__ UI
-#if defined(_PROJ_2000IZ_C003__) && defined(__TWS_CHANNEL_RIGHT__)
+//@20180304 by parker.wei for _PROJ_2000IZ_C003_ UI
+#if defined(_PROJ_2000IZ_C003_) && defined(__TWS_CHANNEL_RIGHT__)
 	if(handle_master_Weared()==true)
 		return true;  		
 #endif
 
-	//@20180316 by parker.wei for _PROJ_2000IZ_C003__ UI
-#if defined(_PROJ_2000IZ_C003__) && defined(__TWS_CHANNEL_LEFT__)
+	//@20180316 by parker.wei for _PROJ_2000IZ_C003_ UI
+#if defined(_PROJ_2000IZ_C003_) && defined(__TWS_CHANNEL_LEFT__)
 	if(handle_slave_Weared()==true)
 		return false;  		//must return fasle,slave need notify the KEY to master
 	
@@ -1051,8 +1051,8 @@ static bool handle_func_key_tripleclick(void)
 static bool handle_func_key_ultraclick(void)
 {
     TRACE("enter %s ",__func__);
-	//@20180304 by parker.wei for _PROJ_2000IZ_C003__ UI
-#if defined(_PROJ_2000IZ_C003__) && defined(__TWS_CHANNEL_RIGHT__)
+	//@20180304 by parker.wei for _PROJ_2000IZ_C003_ UI
+#if defined(_PROJ_2000IZ_C003_) && defined(__TWS_CHANNEL_RIGHT__)
 	struct nvrecord_env_t *nvrecord_env;
 	
 #endif
@@ -1062,8 +1062,8 @@ static bool handle_func_key_ultraclick(void)
        return true;
 #endif
 
-//@20180304 by parker.wei for _PROJ_2000IZ_C003__ UI
-#if defined(_PROJ_2000IZ_C003__) && defined(__TWS_CHANNEL_RIGHT__)
+//@20180304 by parker.wei for _PROJ_2000IZ_C003_ UI
+#if defined(_PROJ_2000IZ_C003_) && defined(__TWS_CHANNEL_RIGHT__)
      if(handle_master_Unweared()==true)
 	 	return true;
 		
@@ -1095,7 +1095,7 @@ static bool handle_func_key_rampageclick(void)
 
 
 
-#ifdef _PROJ_2000IZ_C001__
+#ifdef _PROJ_2000IZ_C001_
 #define VLONGPRESS_INTERVEL                   (3000)
 #define VVLONGPRESS_INTERVEL                (5000)
 #endif
@@ -1381,8 +1381,8 @@ static bool handle_remote_func_key_tripleclick(void)
 #endif
 
 #endif
-	//@20180304 by parker.wei for _PROJ_2000IZ_C003__ UI
-#if defined(_PROJ_2000IZ_C003__) && defined(__TWS_CHANNEL_RIGHT__)
+	//@20180304 by parker.wei for _PROJ_2000IZ_C003_ UI
+#if defined(_PROJ_2000IZ_C003_) && defined(__TWS_CHANNEL_RIGHT__)
 	if(handle_remote_slave_Weared()==true)
 		return true;
 #endif
@@ -1391,11 +1391,11 @@ static bool handle_remote_func_key_tripleclick(void)
 
 }
 
-//@20180304 by parker.wei for _PROJ_2000IZ_C003__ UI
+//@20180304 by parker.wei for _PROJ_2000IZ_C003_ UI
 static bool handle_remote_func_key_ultraclick(void)
 {
 	TRACE("%s enter",__func__);
-#if defined(_PROJ_2000IZ_C003__) && defined(__TWS_CHANNEL_RIGHT__)
+#if defined(_PROJ_2000IZ_C003_) && defined(__TWS_CHANNEL_RIGHT__)
 	if(handle_remote_slave_Unweared()==true)
 		return true;
 #endif

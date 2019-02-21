@@ -29,12 +29,12 @@ extern "C" {
 #define nvrecord_struct_version         1
 #define nvrecord_magic                      0xcb91
 
-#ifdef _PROJ_2000IZ_C002__ //Modified by ATX : Parke.Wei_20180411
+#ifdef _PROJ_2000IZ_C002_ //Modified by ATX : Parke.Wei_20180411
 #define nv_record_debug
 #endif
 
 
-#ifdef _PROJ_2000IZ_C003__ //Modified by ATX : Parke.Wei_20180411
+#ifdef _PROJ_2000IZ_C003_ //Modified by ATX : Parke.Wei_20180411
 #define nv_record_debug
 #endif
 

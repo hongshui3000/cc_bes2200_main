@@ -356,8 +356,8 @@ bool avdtp_Get_aacEnable_Flag( BtRemoteDevice* remDev, AvdtpStream *strm);
 bool auto_tws_searching(void);
 bool stop_tws_searching(void);
 
-//Modified by ATX :parkwe.wei for _PROJ_2000IZ_C003__ UI
-#ifdef _PROJ_2000IZ_C003__
+//Modified by ATX :parkwe.wei for _PROJ_2000IZ_C003_ UI
+#ifdef _PROJ_2000IZ_C003_
 bool get_peer_right_in_state(void);
 bool get_peer_left_in_state(void);
 void set_peer_right_in_state(bool state);

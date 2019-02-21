@@ -916,6 +916,7 @@ void hfp_callback(HfChannel *Chan, HfCallbackParms *Info)
 	            }
 	            app_bt_device.hf_voice_en[chan_id_flag.id] = HF_VOICE_ENABLE;
 	        }
+            
 	        app_audio_manager_sendrequest(APP_BT_STREAM_MANAGER_START,BT_STREAM_VOICE,chan_id_flag.id,MAX_RECORD_NUM);
 
 	        if(MEC(activeCons) != 2){

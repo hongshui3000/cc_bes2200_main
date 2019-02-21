@@ -79,7 +79,7 @@ SPEECH_TX_COMPEXP ?= 1
 
 SPEECH_TX_NOISE_GATE ?= 0
 
-SPEECH_TX_EQ ?= 0
+SPEECH_TX_EQ ?= 1
 
 SPEECH_RX_PLC ?= 1
 
@@ -166,8 +166,8 @@ init-y		:=
 core-y		:= platform/ services/ apps/ utils/cqueue/ utils/list/ services/multimedia/ utils/intersyshci/
 KBUILD_CPPFLAGS += -Iplatform/cmsis/inc -Iservices/audioflinger -Iplatform/drivers/codec -Iplatform/hal -Iservices/fs/ -Iservices/fs/sd -Iservices/fs/fat  -Iservices/fs/fat/ChaN -Iplatform/drivers/norflash
 
+#SDK common compile switch	
 KBUILD_CPPFLAGS += \
-		-D_PROJ_2000IZ_C005__ \
 		-D_SIRI_ENABLED__ \
 		-D_AUTO_SWITCH_POWER_MODE__ \
         -D_BEST1000_QUAL_DCDC_ \
@@ -177,7 +177,6 @@ KBUILD_CPPFLAGS += \
         -D__POWER_OFF_AFTER_PAIR_TIMEOUT__ \
         -D__DEEP_SLEEP_FAKE_POWER_OFF__ \
         -D__TWS_RIGHT_AS_MASTER__  \
-        -D__LIAC_FOR_TWS_PAIRING__\
         -D__HALL_CONTROL_POWER_ \
         -D__SINGLE_TOUCH_SIMPLE_MODE_WITH_TRICPLE_ \
         -D__TWS__  \
@@ -215,16 +214,8 @@ KBUILD_CPPFLAGS += \
 		-D__ACC_FRAGMENT_COMPATIBLE__\
 		-D__DIFFRENT_BITPOOL_FOR_SBC_48K_SAMPLE_RATE__\
 		-DFLASH_REGION_BASE=0x3C018000
-
-    	
-#KBUILD_CPPFLAGS += \
-        				-D__TWS_CHANNEL_LEFT__\
-        				-D__DISABLE_SLAVE_OPENING_RECONNECT_PHONE_\
-        				-D__FUNCTION_KEY_LONG_LONG_PRESS_FOR_TWS_PAIRING_\
-        				-D__FUNCTION_KEY_TRIPLE_CLICK_CLEAR_PHONE_RECORD_\
-        				-D__FUNCTION_KEY_DOUBLE_CLICK_FOR_SLAVE_ENTER_PAIRING_\
-    					-D__TWS_AUTO_POWER_OFF_WHEN_DISCONNECTED__					
-
+ 
+#ATX customization flags: SDK optional compile switch	
 KBUILD_CPPFLAGS += \
         				-D__TWS_CHANNEL_RIGHT__  \
         				-D__EARPHONE_STAY_BOTH_SCAN__  \

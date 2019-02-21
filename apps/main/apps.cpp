@@ -70,6 +70,7 @@ int rb_ctl_init(void);
 void player_role_thread_init(void);
 #endif
 
+int app_nvrecord_rebuild(void);
 
 #define APP_BATTERY_LEVEL_LOWPOWERTHRESHOLD (1)
 
@@ -140,18 +141,22 @@ void app_poweroff_timerout(void);
 void CloseEarphone(void);
 
 //Modified by ATX : Leon.He_20170112: support customized timeout value
-#ifdef _PROJ_2000IZ_C001__
+#ifdef _PROJ_2000IZ_C001_
 #define APP_PAIR_TIMEOUT				30
 #define APP_AUTO_POWER_OFF_TIMEOUT		60
 #endif
 
-#ifdef _PROJ_2000IZ_C005__
+#ifdef _PROJ_2000IZ_C005_
+#ifndef APP_PAIR_TIMEOUT
 #define APP_PAIR_TIMEOUT				30
+#endif
+#ifndef APP_AUTO_POWER_OFF_TIMEOUT
 #define APP_AUTO_POWER_OFF_TIMEOUT		30
+#endif
 #endif
 
 //Modified by ATX : Parker.Wei_20180324
-#ifdef _PROJ_2000IZ_C002__
+#ifdef _PROJ_2000IZ_C002_
 #define APP_PAIR_TIMEOUT				13
 
 #ifdef __DEFINE_LONG_LONG_10_SECOND_TIMER_
@@ -677,7 +682,7 @@ void app_bt_key_enter_testmode(APP_KEY_STATUS *status, void *param)
     TRACE("%s\n",__FUNCTION__);
 
 //Modified by ATX : Leon.He_20171216, support dut with auto pairing
-#if  defined (__MASTER_AUTO_TWS_SEARCHING_WITH_EMPTY_PDL__)
+#if  defined (__AUTO_TWS_SEARCHING_WITH_PDL_EMPTY_)
     if(app_status_indication_get() == APP_STATUS_INDICATION_TWS_SEARCH){
     	stop_tws_searching();
 #ifdef __FACTORY_MODE_SUPPORT__
@@ -714,7 +719,7 @@ void app_bt_key_enter_nosignal_mode(APP_KEY_STATUS *status, void *param)
 {
     TRACE("%s\n",__FUNCTION__);
 //Modified by ATX : Leon.He_20171216, support dut with auto pairing
-#if defined (__MASTER_AUTO_TWS_SEARCHING_WITH_EMPTY_PDL__)
+#if defined (__AUTO_TWS_SEARCHING_WITH_PDL_EMPTY_)
     if(app_status_indication_get() == APP_STATUS_INDICATION_TWS_SEARCH){
     	stop_tws_searching();
 #ifdef __FACTORY_MODE_SUPPORT__
@@ -828,7 +833,10 @@ void app_bt_key_handler_when_charging(APP_KEY_STATUS *status, void *param)
 #ifdef __DOWN_KEY_LONG_PRESS_DURING_CHARGE_FOR_OTA_
 		app_otaMode_enter(NULL, NULL);
 #endif
-
+#ifdef __FUNCTION_KEY_LONG_LONG_PRESS_DURING_CHARGE_FOR_NV_REBUILD_
+		app_status_indication_set(APP_STATUS_INDICATION_CLEARSUCCEED);
+		app_nvrecord_rebuild();
+#endif
         break;
     }
 }
@@ -985,6 +993,9 @@ void app_key_init_on_charging(void)
 #endif
 #ifdef __FUNCTION_KEY_RAMPAGE_CLICK_DURING_CHARGE_FOR_OTA_
 		{{APP_KEY_CODE_FN1,APP_KEY_EVENT_RAMPAGECLICK},"ota function key", app_bt_key_handler_when_charging,NULL},
+#endif
+#ifdef __FUNCTION_KEY_LONG_LONG_PRESS_DURING_CHARGE_FOR_NV_REBUILD_
+		{{APP_KEY_CODE_FN1,APP_KEY_EVENT_LONGLONGPRESS},"function key when charging",app_bt_key_handler_when_charging, NULL},
 #endif
 #ifdef __FUNCTION_KEY_LONG_LONG_PRESS_DURING_CHARGE_FOR_RESET_PHONE_PDL_
         {{APP_KEY_CODE_FN1,APP_KEY_EVENT_LONGLONGPRESS},"function key when charging",app_bt_key_handler_when_charging, NULL},

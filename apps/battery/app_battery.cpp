@@ -63,12 +63,14 @@ extern "C" bool app_usbaudio_mode_on(void);
 #define APP_BATTERY_MEASURE_PERIODIC_NORMAL_MS (10000)
 #define APP_BATTERY_CHARGING_PERIODIC_MS (3000)
 //Modified by ATX : Leon.He_20180102: adjust low batter report timing
-#ifdef _PROJ_2000IZ_C001__
+#ifdef _PROJ_2000IZ_C001_
 #define APP_BATTERY_CHARGENEED_REPORT_COUNT (12)
-#elif defined(_PROJ_2000IZ_C002__)//Modified by ATX : Parker.Wei_20180329
+#elif defined(_PROJ_2000IZ_C002_)//Modified by ATX : Parker.Wei_20180329
 #define APP_BATTERY_CHARGENEED_REPORT_COUNT (30)
-#elif defined(_PROJ_2000IZ_C005__)
-#define APP_BATTERY_CHARGENEED_REPORT_COUNT (20)
+#elif defined(_PROJ_2000IZ_C005_)
+#ifndef APP_BATTERY_CHARGENEED_REPORT_COUNT
+#define APP_BATTERY_CHARGENEED_REPORT_COUNT (30)
+#endif
 #else
 #define APP_BATTERY_CHARGENEED_REPORT_COUNT (2)
 #endif
@@ -404,7 +406,7 @@ int app_battery_open(void)
         hal_iomux_init((struct HAL_IOMUX_PIN_FUNCTION_MAP *)&app_battery_ext_charger_detecter_cfg, 1);
         hal_gpio_pin_set_dir((enum HAL_GPIO_PIN_T)app_battery_ext_charger_detecter_cfg.pin, HAL_GPIO_DIR_IN, 1);
     }
-#ifdef  _PROJ_2000IZ_C003__	//Modified by ATX : Parke.Wei_20180328
+#ifdef  _PROJ_2000IZ_C003_	//Modified by ATX : Parke.Wei_20180328
     if (app_battery_ext_charger_control.pin != HAL_IOMUX_PIN_NUM){
         hal_iomux_init((struct HAL_IOMUX_PIN_FUNCTION_MAP *)&app_battery_ext_charger_control, 1);
         hal_gpio_pin_set_dir((enum HAL_GPIO_PIN_T)app_battery_ext_charger_control.pin, HAL_GPIO_DIR_IN, 1);
@@ -418,7 +420,7 @@ int app_battery_open(void)
     		hal_gpio_pin_set_dir((enum HAL_GPIO_PIN_T)app_battery_ext_charger_indicator_cfg.pin, HAL_GPIO_DIR_IN, 1);
     	}
 
-#ifdef  _PROJ_2000IZ_C003__	//Modified by ATX : Parke.Wei_20180328
+#ifdef  _PROJ_2000IZ_C003_	//Modified by ATX : Parke.Wei_20180328
 		if (app_battery_ext_charger_control.pin != HAL_IOMUX_PIN_NUM){
 				hal_gpio_pin_set_dir((enum HAL_GPIO_PIN_T)app_battery_ext_charger_control.pin, HAL_GPIO_DIR_OUT, 0);
 		}  
