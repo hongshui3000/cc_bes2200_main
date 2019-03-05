@@ -125,6 +125,7 @@ void app_battery_irqhandler(uint16_t irq_val, HAL_GPADC_MV_T volt)
     uint8_t i;
     uint32_t meanBattVolt = 0;
     HAL_GPADC_MV_T vbat = volt;
+    static uint32_t OldmeanBattVolt = APP_BATTERY_MAX_MV;
     APP_BATTERY_TRACE("%s %d",__func__, vbat);
     if (vbat == HAL_GPADC_BAD_VALUE){
         app_battery_measure.cb(APP_BATTERY_STATUS_INVALID, vbat);
@@ -141,6 +142,14 @@ void app_battery_irqhandler(uint16_t irq_val, HAL_GPADC_MV_T volt)
             meanBattVolt += app_battery_measure.voltage[i];
         }
         meanBattVolt /= APP_BATTERY_STABLE_COUNT;
+//modify by ATX:        
+        if(app_battery_measure.status != APP_BATTERY_STATUS_CHARGING)
+        {
+            if(meanBattVolt > OldmeanBattVolt)
+                meanBattVolt = OldmeanBattVolt;
+            OldmeanBattVolt = meanBattVolt;
+            APP_BATTERY_TRACE("----->meanBattVolt:%d\r\n",meanBattVolt);
+        }
         if (app_battery_measure.cb){
             if (meanBattVolt>app_battery_measure.highvolt){
                 app_battery_measure.cb(APP_BATTERY_STATUS_OVERVOLT, meanBattVolt);

@@ -61,7 +61,56 @@ uint8_t bt_access_mode_set_pending=0;
 bool	manual_enter_pair_mode=false;
 #endif
 
+enum bt_profile_reconnect_mode{
+    bt_profile_reconnect_null,
+    bt_profile_reconnect_openreconnecting,
+    bt_profile_reconnect_reconnecting,
+};
 
+enum bt_profile_connect_status{
+    bt_profile_connect_status_unknow,
+    bt_profile_connect_status_success,
+    bt_profile_connect_status_failure,
+};
+
+struct app_bt_profile_manager{
+    bool has_connected;
+    enum bt_profile_connect_status hfp_connect;
+    enum bt_profile_connect_status hsp_connect;
+    enum bt_profile_connect_status a2dp_connect;
+    BT_BD_ADDR rmt_addr;
+    bt_profile_reconnect_mode reconnect_mode;
+    A2dpStream *stream;
+    HfChannel *chan;
+    uint16_t reconnect_cnt;    
+    osTimerId connect_timer;    
+    void (* connect_timer_cb)(void const *);
+};
+
+#ifdef _PROJ_2000IZ_C001_
+//reconnect = (INTERVAL+PAGETO)*CNT = (3000ms+5000ms)*36 = 388s, near to 5mins
+#define APP_BT_PROFILE_RECONNECT_RETRY_LIMIT_CNT (36)
+#endif
+
+#ifdef _PROJ_2000IZ_C005_
+//reconnect = (INTERVAL+PAGETO)*CNT = (3000ms+5000ms)*36 = 388s, near to 5mins
+#define APP_BT_PROFILE_RECONNECT_RETRY_LIMIT_CNT (36)
+#endif
+
+//reconnect = (INTERVAL+PAGETO)*CNT = (3000ms+5000ms)*15 = 120s
+#define APP_BT_PROFILE_RECONNECT_RETRY_INTERVAL_MS (3000)
+#ifndef APP_BT_PROFILE_RECONNECT_RETRY_LIMIT_CNT
+#define APP_BT_PROFILE_RECONNECT_RETRY_LIMIT_CNT (15)
+#endif
+#define APP_BT_PROFILE_CONNECT_RETRY_MS (10000)
+
+static struct app_bt_profile_manager bt_profile_manager[BT_DEVICE_NUM];
+static void app_bt_profile_reconnect_timehandler(void const *param);
+ 
+osTimerDef (BT_PROFILE_CONNECT_TIMER0, app_bt_profile_reconnect_timehandler);                      // define timers
+#ifdef __BT_ONE_BRING_TWO__
+osTimerDef (BT_PROFILE_CONNECT_TIMER1, app_bt_profile_reconnect_timehandler);
+#endif
 
 #ifdef __DISCONNECT_TEST_
 static uint8_t hf_event_disconnected_reason = 0;
@@ -573,8 +622,11 @@ static void app_bt_golbal_handle(const BtEvent *Event)
                     if (app_tws_ble_reconnect.adv_func)
                         app_tws_ble_reconnect.adv_func(APP_TWS_OPEN_BLE_ADV);
                 } else if (tws_mode->mode == TWSMASTER) {
-                    if (app_tws_ble_reconnect.scan_func)
-                        app_tws_ble_reconnect.scan_func(APP_TWS_OPEN_BLE_SCAN);
+                    if(bt_profile_manager[0].reconnect_mode != bt_profile_reconnect_reconnecting)
+                    {
+                        if (app_tws_ble_reconnect.scan_func)
+                            app_tws_ble_reconnect.scan_func(APP_TWS_OPEN_BLE_SCAN);
+                    }
                 }
             }
 #endif
@@ -1275,57 +1327,6 @@ void *app_bt_profile_active_store_ptr_get(uint8_t *bdAddr)
     }
     return (void *)ptr;
 }
-
-enum bt_profile_reconnect_mode{
-    bt_profile_reconnect_null,
-    bt_profile_reconnect_openreconnecting,
-    bt_profile_reconnect_reconnecting,
-};
-
-enum bt_profile_connect_status{
-    bt_profile_connect_status_unknow,
-    bt_profile_connect_status_success,
-    bt_profile_connect_status_failure,
-};
-
-struct app_bt_profile_manager{
-    bool has_connected;
-    enum bt_profile_connect_status hfp_connect;
-    enum bt_profile_connect_status hsp_connect;
-    enum bt_profile_connect_status a2dp_connect;
-    BT_BD_ADDR rmt_addr;
-    bt_profile_reconnect_mode reconnect_mode;
-    A2dpStream *stream;
-    HfChannel *chan;
-    uint16_t reconnect_cnt;    
-    osTimerId connect_timer;    
-    void (* connect_timer_cb)(void const *);
-};
-
-#ifdef _PROJ_2000IZ_C001__
-//reconnect = (INTERVAL+PAGETO)*CNT = (3000ms+5000ms)*36 = 388s, near to 5mins
-#define APP_BT_PROFILE_RECONNECT_RETRY_LIMIT_CNT (36)
-#endif
-
-#ifdef _PROJ_2000IZ_C005__
-//reconnect = (INTERVAL+PAGETO)*CNT = (3000ms+5000ms)*36 = 388s, near to 5mins
-#define APP_BT_PROFILE_RECONNECT_RETRY_LIMIT_CNT (36)
-#endif
-
-//reconnect = (INTERVAL+PAGETO)*CNT = (3000ms+5000ms)*15 = 120s
-#define APP_BT_PROFILE_RECONNECT_RETRY_INTERVAL_MS (3000)
-#ifndef APP_BT_PROFILE_RECONNECT_RETRY_LIMIT_CNT
-#define APP_BT_PROFILE_RECONNECT_RETRY_LIMIT_CNT (15)
-#endif
-#define APP_BT_PROFILE_CONNECT_RETRY_MS (10000)
-
-static struct app_bt_profile_manager bt_profile_manager[BT_DEVICE_NUM];
-static void app_bt_profile_reconnect_timehandler(void const *param);
- 
-osTimerDef (BT_PROFILE_CONNECT_TIMER0, app_bt_profile_reconnect_timehandler);                      // define timers
-#ifdef __BT_ONE_BRING_TWO__
-osTimerDef (BT_PROFILE_CONNECT_TIMER1, app_bt_profile_reconnect_timehandler);
-#endif
 
 #ifdef __AUTO_CONNECT_OTHER_PROFILE__
 static void app_bt_profile_connect_hf_retry_timehandler(void const *param)

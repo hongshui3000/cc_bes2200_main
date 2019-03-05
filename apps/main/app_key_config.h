@@ -15,7 +15,7 @@ Copyright (c) ATX ShenZhen, Ltd.
 #define KEY_HANDLE_NUM		5
 #elif defined(__SINGLE_TOUCH_SIMPLE_MODE_WITH_TRICPLE_)
 #ifdef __FACTORY_KEY_SUPPORT_
-#define KEY_HANDLE_NUM		9
+#define KEY_HANDLE_NUM		10
 #else
 #define KEY_HANDLE_NUM		6
 #endif //__FACTORY_KEY_SUPPORT_

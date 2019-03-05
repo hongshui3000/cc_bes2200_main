@@ -13,6 +13,10 @@ void bt_key_handle_func_key(uint16_t event);
 bool bt_key_handle_local_func_key(uint16_t event);
 void bt_key_handle_up_key(enum APP_KEY_EVENT_T event);
 void bt_key_handle_down_key(enum APP_KEY_EVENT_T event);
+#ifdef __EXTRA_KEY_FOR_PRODUCT_LINE_
+void factory_key_combo_handle(enum APP_KEY_EVENT_T event);
+void factory_key_handle(enum APP_KEY_EVENT_T event);
+#endif
 
 #ifdef __cplusplus
 }

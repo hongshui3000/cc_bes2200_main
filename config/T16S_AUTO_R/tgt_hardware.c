@@ -4,6 +4,15 @@
 #include "hw_codec_iir_process.h"
 #include "coherent_denoise.h"
 
+#ifdef _ATX_TWS_BT_ADDR_FILTER_
+const uint32_t ATX_BT_ADDR_FILTER_LIST[ATX_BT_ADDR_LIST_LEN] = {
+    0x005CCD7C,
+    0x009C431E,
+    0x000CFE5D,
+    0x00745BC5
+};
+#endif
+
 const struct HAL_IOMUX_PIN_FUNCTION_MAP cfg_hw_pinmux_pwl[CFG_HW_PLW_NUM] = {
 #ifdef __HW_PWM_CONTROL_LED__
 	{HAL_GPIO_PIN_P2_6, HAL_IOMUX_FUNC_PWM2, HAL_IOMUX_PIN_VOLTAGE_VIO, HAL_IOMUX_PIN_PULLUP_ENALBE},
@@ -52,8 +61,8 @@ const int8_t cfg_aud_eq_sbc_band_settings[CFG_HW_AUD_EQ_NUM_BANDS] = {0, 0, 0, 0
 const struct CODEC_DAC_VOL_T codec_dac_vol[TGT_VOLUME_LEVEL_QTY] = {
     {TX_PA_GAIN,0x03,-18},
     {TX_PA_GAIN,0x03,-99},
-    {TX_PA_GAIN,0x03,-70},
-    {TX_PA_GAIN,0x03,-45},
+    {TX_PA_GAIN,0x03,-48},
+    {TX_PA_GAIN,0x03,-42},
     {TX_PA_GAIN,0x03,-39},
     {TX_PA_GAIN,0x03,-36},
     {TX_PA_GAIN,0x03,-33},

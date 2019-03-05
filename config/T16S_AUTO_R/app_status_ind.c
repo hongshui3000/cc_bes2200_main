@@ -294,13 +294,13 @@ int app_status_indication_set(APP_STATUS_INDICATION_T status)
 		
 	  case APP_STATUS_INDICATION_PAGESCAN:
       case APP_STATUS_INDICATION_CONNECTING:  
+	  case APP_STATUS_INDICATION_TWS_SEARCH:
+	  case APP_STATUS_INDICATION_TWS_PAIRING:
           app_pwl_setup(APP_PWL_ID_0, APP_STATUS_INDICATION_CFG_GET(pagescan));
           app_pwl_start(APP_PWL_ID_0);	  	
 	  break;
 	  
 	  case APP_STATUS_INDICATION_BOTHSCAN:
-	  case APP_STATUS_INDICATION_TWS_SEARCH:
-	  case APP_STATUS_INDICATION_TWS_PAIRING:
           app_pwl_setup(APP_PWL_ID_0, APP_STATUS_INDICATION_CFG_GET(pairing));
           app_pwl_start(APP_PWL_ID_0);
       break;
@@ -398,6 +398,8 @@ int app_status_indication_set(APP_STATUS_INDICATION_T status)
             break;
         case APP_STATUS_INDICATION_PAGESCAN:
         case APP_STATUS_INDICATION_CONNECTING:
+		case APP_STATUS_INDICATION_TWS_SEARCH:
+        case APP_STATUS_INDICATION_TWS_PAIRING:
             cfg0.part[0].level = 1;
             cfg0.part[0].time = (200);
             cfg0.part[1].level = 0;
@@ -409,8 +411,6 @@ int app_status_indication_set(APP_STATUS_INDICATION_T status)
             app_pwl_start(APP_PWL_ID_0);
             break;
         case APP_STATUS_INDICATION_BOTHSCAN:
-		case APP_STATUS_INDICATION_TWS_SEARCH:
-        case APP_STATUS_INDICATION_TWS_PAIRING:
             cfg0.part[0].level = 1;
             cfg0.part[0].time = (250);
             cfg0.part[1].level = 0;

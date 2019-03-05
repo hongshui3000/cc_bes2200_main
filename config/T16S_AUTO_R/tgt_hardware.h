@@ -107,9 +107,9 @@ extern const struct HAL_KEY_GPIOKEY_CFG_T cfg_hw_gpio_key_cfg[CFG_HW_GPIOKEY_NUM
 
 #ifdef __CUSTOMIZE_VERSION_BLE_NAME__
 #ifdef __TWS_CHANNEL_LEFT__
-#define BLE_DEFAULT_NAME  "BES-VERSION-1.0-L"
+#define BLE_DEFAULT_NAME  "BES-VERSION-1.3-L"
 #else 
-#define BLE_DEFAULT_NAME  "BES-VERSION-1.0-R"
+#define BLE_DEFAULT_NAME  "BES-VERSION-1.3-R"
 #endif
 #define BLE_MANU_DATA         "\xFF\xB0\x02\x00\x01"
 #define BLE_MANU_DATA_LEN	5
@@ -126,15 +126,16 @@ extern uint8_t bt_addr[6];
 
 #define MAX_TWS_INQUIRY_TIMES 	5
 #define PEER_INQUIRE_TIMEOUT	2//Modified by ATX : Leon.He_20190220: reduce peer inquire timeout from 3s to 2s for auto pairing.
-#define CONNECTING_SLAVE_TIMEOUT_RECONNECT_IN_MS                      (10000)
-#define APP_TWS_POSTPONE_TO_START_TWS_SEARCHING_TIMEOUT_IN_MS         4000
+#define CONNECTING_SLAVE_TIMEOUT_RECONNECT_IN_MS                      (12000)
+#define APP_TWS_POSTPONE_TO_START_TWS_SEARCHING_TIMEOUT_IN_MS         5000
+#define MASTER_RECONNECT_PHONE_TIME_S	3000
 
 //5db per step max is 7
 #define ANALOG_ADC_GAIN1    0x5
 #define ANALOG_ADC_GAIN2    0x4
 
 #define LC_MMSE_NOISE_SUPPRESS_LEVEL (-12)
-#define CODEC_SADC_VOL (10)
+#define CODEC_SADC_VOL (13)
 
 #define ZERODB_DIG_DAC_REGVAL (21)
 
@@ -152,6 +153,10 @@ extern  int8_t cfg_hw_aud_eq_band_settings[CFG_HW_AUD_EQ_NUM_BANDS];
 
 #define APP_BATTERY_MAX_MV (4210)
 
+#ifdef _ATX_TWS_BT_ADDR_FILTER_
+#define ATX_BT_ADDR_LIST_LEN 4
+extern const uint32_t ATX_BT_ADDR_FILTER_LIST[ATX_BT_ADDR_LIST_LEN];
+#endif
 extern const struct HAL_IOMUX_PIN_FUNCTION_MAP app_battery_ext_charger_detecter_cfg;
 extern const struct HAL_IOMUX_PIN_FUNCTION_MAP app_battery_ext_charger_indicator_cfg;
 

@@ -385,7 +385,9 @@ int app_hfp_siri_voice(bool en)
 #ifdef __ONLY_REPORT_IMCOMING_CALL_ONCE_
 static uint8_t incoming_call_report_count = 0;
 #endif
-
+#ifdef __ALLOW_CLOSE_SIRI__
+extern bool is_siri_open_flag;
+#endif
 #if !defined(FPGA) && defined(__EARPHONE__)
 void hfp_app_status_indication(enum BT_DEVICE_ID_T chan_id,HfCallbackParms *Info)
 {
@@ -723,7 +725,11 @@ void hfp_callback(HfChannel *Chan, HfCallbackParms *Info)
             hfp_app_status_indication(chan_id_flag.id,Info);
         }
 #endif
-
+        if(Info->p.remDev->discReason == 0x08)
+        {
+            if (app_tws_ble_reconnect.scan_func)
+                app_tws_ble_reconnect.scan_func(APP_TWS_CLOSE_BLE_SCAN);
+        }
 #ifdef __BT_ONE_BRING_TWO__
         if(app_bt_device.hf_conn_flag[chan_id_flag.id]){
             app_bt_stream_volume_ptr_update(app_bt_device.hf_channel[chan_id_flag.id].cmgrHandler.remDev->bdAddr.addr);

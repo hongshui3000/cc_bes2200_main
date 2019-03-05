@@ -27,7 +27,7 @@
 #include "compexp.h"
 #include "ae_math.h"
 
-//#define SPEECH_ALGORITHMGAIN (DB2LIN(0))
+//#define SPEECH_ALGORITHMGAIN (DB2LIN(12))
 //#define SPEAKER_ALGORITHMGAIN (DB2LIN(0))
 
 /**
@@ -221,7 +221,7 @@ const CompexpConfig speech_tx_compexp_cfg = {
     .expand_slope = -0.5f,
     .attack_time = 0.01f,
     .release_time = 0.1f,
-    .makeup_gain = 6,
+    .makeup_gain = 12,
     .delay = 128,
 };
 #endif
@@ -261,11 +261,11 @@ static AgcState *speech_rx_agc_st = NULL;
 static EqState *speech_tx_eq_st = NULL;
 // A Weighting 8k
 const EqConfigRaw speech_tx_eq_cfg_8k = {
-    .gain = -3.0f,
+    .gain = 0.f,
     .num = 2,
     .param = {
-                {-0.395901f, 0.281164f, 1.357715f, -0.395901f, -0.076551f},
-                {-0.918773f, 0.208266f, 0.802537f, -0.918773f, 0.405730f},
+                {-1.776835f, 0.798984f, 0.893955f, -1.787909f, 0.893955f},   //fs: 8000, type: highpass, gain: 0.000000, freq: 200.000000, Q: 0.700000
+                {1.180165f, 0.669005f, 1.068274f, 1.180165f, 0.600731f},    // 3k 3 Q1.5
 //            {0.1038f, -0.3604f, 1.0000f, 0.0000f, -1.0000f},
 //            {-0.2644f, -0.6014f, 1.0000f, 0.0000f, -1.0000f},
 //            {-1.9679f, 0.9682f, 1.0000f, -2.0000f, 1.0000f},

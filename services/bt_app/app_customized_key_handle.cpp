@@ -98,6 +98,18 @@ static bool reset_paired_device_list(void)
     return true;
 }
 
+void app_reset_paired_device_list_and_disconnect_all(void)
+{
+    if(isActiveConnections())
+    {
+        TRACE("phone already connected and disconnect the AG\n");
+        app_bt_disconnect_all();
+        osDelay(1000);
+    }
+
+    app_reset_paired_device_list();
+}
+
 static void stop_tws_adv(void)
 {
 	struct nvrecord_env_t *nvrecord_env;
@@ -1534,6 +1546,39 @@ bool bt_key_handle_local_func_key(uint16_t event)
 	handled = handle_local_func_key(event & BT_KEY_MASK);
 	return handled;
 }
+
+#ifdef __EXTRA_KEY_FOR_PRODUCT_LINE_
+extern void app_test_key_handler(APP_KEY_STATUS *status, void *param);
+void factory_key_combo_handle(enum APP_KEY_EVENT_T event)
+{
+    switch(event)
+    {
+        case  APP_KEY_EVENT_CLICK:
+            app_reset_paired_device_list_and_disconnect_all();
+            break;
+        default:
+            break;
+    }
+}
+
+void factory_key_handle(enum APP_KEY_EVENT_T event)
+{
+    switch(event)
+    {
+        case  APP_KEY_EVENT_CLICK:
+            start_pairing_without_connection();
+            break;
+        case  APP_KEY_EVENT_DOUBLECLICK:
+            app_reset_paired_device_list_and_disconnect_all();
+            break;
+        case  APP_KEY_EVENT_LONGPRESS:
+            app_test_key_handler(0,0);
+            break;
+        default:
+            break;
+    }
+}
+#endif
 
 void bt_key_handle_up_key(enum APP_KEY_EVENT_T event)
 {

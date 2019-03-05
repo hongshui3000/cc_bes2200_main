@@ -1980,6 +1980,26 @@ void tws_app_stop_find(void)
 
 }
 
+#ifdef _ATX_TWS_BT_ADDR_FILTER_
+bool atx_bt_addr_filter(const uint8_t *addr)
+{
+    int nap_uap = 0;
+    int i;
+    nap_uap |= (int)(addr[5]<<16) & 0xff0000;
+    nap_uap |= (int)(addr[4]<<8) & 0xff00;
+    nap_uap |= (int)(addr[3]) & 0xff;
+    
+    for(i = 0; i < ATX_BT_ADDR_LIST_LEN; i++){
+        if(nap_uap == ATX_BT_ADDR_FILTER_LIST[i]){
+            TRACE("[%s] pass nap_uap: %x", __FUNCTION__, nap_uap);
+            return true;
+        }
+    }
+    
+    TRACE("[%s] invalid nap_uap: %x", __FUNCTION__, nap_uap);
+    return false;
+}
+#endif
 
 static void bt_call_back(const BtEvent* event)
 {
@@ -1996,9 +2016,15 @@ static void bt_call_back(const BtEvent* event)
             TWSCON_DBLOG("inqmode = %x",event->p.inqResult.inqMode);
             DUMP8("%02x ", event->p.inqResult.extInqResp, 20);
             ///check the uap and nap if equal ,get the name for tws slave
-
+//Modified by ATX:cc_20190215 atx bt addr filter in tws pairing    			
+#ifndef _DISABLE_TWS_BT_ADDR_FILTER_
             if((event->p.inqResult.bdAddr.addr[5]== bt_addr[5]) && (event->p.inqResult.bdAddr.addr[4]== bt_addr[4]) &&
-                    (event->p.inqResult.bdAddr.addr[3]== bt_addr[3]))
+                    (event->p.inqResult.bdAddr.addr[3]== bt_addr[3])
+#ifdef _ATX_TWS_BT_ADDR_FILTER_
+                || (atx_bt_addr_filter(event->p.inqResult.bdAddr.addr))
+#endif
+            )
+#endif
             {
                 ///check the device is already checked
                 if(app_tws_is_addr_in_tws_inq_array(&event->p.inqResult.bdAddr))
@@ -2103,7 +2129,6 @@ static void bt_call_back(const BtEvent* event)
 
                 uint8_t rand_delay = rand() % 5;
                  tws_inquiry_count++;
-                
                 if(rand_delay == 0)
                 {
 //Modified by ATX : Leon.He_20171227: support liac tws pairing
@@ -2269,7 +2294,10 @@ void app_tws_master_reconnect_slave(BT_BD_ADDR *bdAddr)
     A2dpStream *src = twsd->tws_source.stream;
 
     TWSCON_DBLOG("\nenter: %s %d\n",__FUNCTION__,__LINE__);
+//Modified by ATX : cc_20190228: workaround for auto tws pairing    
+#ifndef _WORKAROUND_FOR_AUTO_TWS_PAIR_    
     tws.create_conn_pending = true;
+#endif
     tws_reconnect_process = true;
     memcpy(tws.connecting_addr.addr,bdAddr->addr,6);
     status = A2DP_OpenStream(src, bdAddr);        
@@ -2290,9 +2318,17 @@ static void POSSIBLY_UNUSED hfp_reconnect(void *arg)
 }
 void reconnect_timer_callback(void const *n) {
     //app_bt_send_request(APP_BT_REQ_CUSTOMER_CALL, 0 ,0, (uint32_t)hfp_reconnect);
+    if (is_find_tws_peer_device_onprocess() == true)
+    	find_tws_peer_device_stop();
     app_bt_send_request(APP_BT_REQ_CUSTOMER_CALL, 0 ,0, (uint32_t)app_bt_profile_connect_manager_opening_reconnect);
 }
 static osTimerId timerId = NULL;
+
+//Modified by ATX : cc_20190221 longer reconnect phone time
+#ifndef MASTER_RECONNECT_PHONE_TIME_S   
+#define MASTER_RECONNECT_PHONE_TIME_S   2000
+#endif
+
 osTimerDef(master_reconnect_phone_timer, reconnect_timer_callback);
 
 bool app_tws_reconnect_slave_process(uint8_t a2dp_event, uint8_t avctp_event)
@@ -2363,7 +2399,8 @@ connect_to_player:
         timerId = osTimerCreate(osTimer(master_reconnect_phone_timer), osTimerOnce, (void *)0); 
     }
     if(MEC(pendCons) == 0  && (tws.mobile_sink.connected == false)){
-        osTimerStart(timerId, 2000);
+//Modified by ATX : cc_20190221 longer reconnect phone time for T16S        
+        osTimerStart(timerId, MASTER_RECONNECT_PHONE_TIME_S);
         //HF_CreateServiceLink(&app_bt_device.hf_channel[BT_DEVICE_ID_1], &record2.bdAddr);
     }
 
@@ -2514,7 +2551,9 @@ void tws_slave_con_phone_timer_callback(void const *n) {
 }
 osTimerDef(tws_slave_con_phone_timer, tws_slave_con_phone_timer_callback);
 
+#ifndef APP_START_TWS_SLAVE_CON_PHONE_MS
 #define APP_START_TWS_SLAVE_CON_PHONE_MS (5000)
+#endif
 
 void app_start_tws_slave_con_phone_timer(void)
 {
@@ -2537,6 +2576,9 @@ void app_start_tws_slave_con_phone_timer(void)
 #endif
 void app_tws_postpone_to_start_tws_searching(void const *param)
 {
+	if(app_tws_mode_is_slave() == true)
+		return;
+	
 	if(app_tws_mode_is_master() == false)
 		app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BT_DEFAULT_ACCESS_MODE_PAIR,2,0);
 }
@@ -2617,13 +2659,17 @@ void app_tws_start_reconnct(struct tws_mode_t *tws_mode)
                 TRACE("scan interval = %x",*(volatile uint32_t *)0xc000566c);
                 *(volatile uint32_t *)0xc000566c = 0x20;
             }
+//Modified by ATX : cc_20190228: workaround for auto tws pairing
+#ifndef _WORKAROUND_FOR_AUTO_TWS_PAIR_ 
              MeWriteBtPagescan_Type(1);
+#endif
 //            *((volatile uint32_t *)0XD02201B0) |= (1 << 15);  ////ble first always
-            app_bt_accessmode_set(BT_DEFAULT_ACCESS_MODE_NCON);
 
 //Modified by ATX :KSW20190124
 #ifdef _TWS_PAIRING_AND_RCNT_SIMULTANEOUSLY_
 			app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BT_DEFAULT_ACCESS_MODE_TWS_PAIR, 0,0);
+#else
+			app_bt_accessmode_set(BT_DEFAULT_ACCESS_MODE_NCON);
 #endif
 
 //Modified by ATX : Leon.He_20170323: prohibit slave connect phone timer.

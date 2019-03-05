@@ -132,11 +132,9 @@ const U8 EN_BT_TWS_ISSLAVE[] = {
 };
 
 const U8 EN_BT_TWS_SEARCH[] = {
-#include "res/en/SOUND_TWS_SEARCH.txt"
 };
 
 const U8 EN_BT_TWS_STOPSEARCH[] = {
-#include "res/en/SOUND_TWS_STOPSEARCH.txt"
 };
 
 const U8 EN_BT_TWS_DISCOVERABLE[] = {
@@ -155,7 +153,6 @@ const U8 EN_BT_TWS_CONNECTED[] = {
 };
 
 const U8 EN_BT_TWS_PAIRING[] = {
-#include "res/en/SOUND_TWS_PAIRING.txt"
 };
 
 #endif  

@@ -761,7 +761,16 @@ void bt_key_handle(void)
 						bt_key_handle_func_key(bt_key.event);//Modified by ATX : Leon.He_20180110: change to uint16
 #endif
 					break;
-				case BTAPP_VOLUME_UP_KEY:		
+
+#ifdef __EXTRA_KEY_FOR_PRODUCT_LINE_
+                                    case APP_KEY_CODE_FN1 | APP_KEY_CODE_FN2:
+                                        factory_key_combo_handle((enum APP_KEY_EVENT_T)bt_key.event);
+                                        break;
+                                    case BTAPP_VOLUME_UP_KEY:	
+                                        factory_key_handle((enum APP_KEY_EVENT_T)bt_key.event);
+                                        break;
+#else 
+                                    case BTAPP_VOLUME_UP_KEY:		
 				    if(app_tws_mode_is_slave())   //Modified by ATX : parker.wei_20180305
                         tws_player_notify_key(bt_key.code, bt_key.event);
 					else
@@ -773,6 +782,8 @@ void bt_key_handle(void)
 #endif
 #endif
 					break;
+#endif                                        
+				
 				case BTAPP_VOLUME_DOWN_KEY:
 				    if(app_tws_mode_is_slave())  //Modified by ATX : parker.wei_20180305
                         tws_player_notify_key(bt_key.code, bt_key.event);
