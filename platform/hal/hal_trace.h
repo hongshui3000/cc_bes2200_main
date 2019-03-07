@@ -46,6 +46,19 @@ enum HAL_TRACE_MODUAL {
     HAL_TRACE_LEVEL_ALL = 0XFFFFFFFF,
 };
 
+typedef enum __TRACE_COLOR__{
+    BLACK = 30, //      Black 
+    RED,
+    GREEN,
+    YELLOW,
+    BLUE,
+    MAGENTA,
+    CYAN,
+    WHITE,
+
+    TOTAL_COLOR_NUM,
+}TRACE_COLOR;//Kevin
+
 #if defined(__PRODUCT_TEST__)
 #define HAL_TRACE_RX_ENABLE
 int hal_product_test_trace_printf(const char *fmt, ...);
@@ -58,6 +71,7 @@ int hal_product_test_trace_dump (const char *fmt, unsigned int size,  unsigned i
 
 #if defined(DEBUG) && !defined(AUDIO_DEBUG)
 #define TRACE(str, ...)             hal_trace_printf(HAL_TRACE_LEVEL_0, str, ##__VA_ARGS__)
+#define TRACE_COLOR(COLOR, str, ...)             hal_trace_color_printf(COLOR, HAL_TRACE_LEVEL_0, str, ##__VA_ARGS__)
 #define TRACE_NOCRLF(str, ...)      hal_trace_printf_without_crlf(HAL_TRACE_LEVEL_0, str, ##__VA_ARGS__)
 #define TRACE_IMM(str, ...)         hal_trace_printf_imm(HAL_TRACE_LEVEL_0, str, ##__VA_ARGS__)
 #define TRACE_OUTPUT(str, len)      hal_trace_output(str, len)
@@ -68,6 +82,7 @@ int hal_product_test_trace_dump (const char *fmt, unsigned int size,  unsigned i
 #else
 // To avoid warnings on unused variables
 #define TRACE(str, ...)             hal_trace_dummy(str, ##__VA_ARGS__)
+#define TRACE_COLOR(COLOR, str, ...)	hal_trace_dummy(str, ##__VA_ARGS__)
 #define TRACE_NOCRLF(str, ...)      hal_trace_dummy(str, ##__VA_ARGS__)
 #define TRACE_IMM(str, ...)         hal_trace_dummy(str, ##__VA_ARGS__)
 #define TRACE_OUTPUT(str, len)      hal_trace_dummy(str, len)
@@ -116,6 +131,7 @@ int hal_trace_close(void);
 int hal_trace_output(const unsigned char *buf, unsigned int buf_len);
 
 int hal_trace_printf(uint32_t lvl, const char *fmt, ...);
+int hal_trace_color_printf(TRACE_COLOR color, uint32_t lvl, const char *fmt, ...);//Kevin
 
 int hal_trace_printf_without_crlf(uint32_t lvl, const char *fmt, ...);
 

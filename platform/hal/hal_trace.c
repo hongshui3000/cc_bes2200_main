@@ -13,6 +13,10 @@
 #include "hal_bootmode.h"
 #include "pmu.h"
 
+//Kevin
+#include "hal_timer.h"
+
+
 extern const char sys_build_info[];
 #define CRASH_REBOOT   1
 
@@ -661,11 +665,35 @@ int hal_trace_printf(uint32_t lvl, const char *fmt, ...)
         return 0;
     }
 
+    sprintf(buf, "[%08d] ", TICKS_TO_MS(hal_sys_timer_get()));
+    
     va_start(ap, fmt);
-    len = hal_trace_format_va(buf, sizeof(buf), true, fmt, ap);
+    len =  strlen(buf) + hal_trace_format_va(buf + strlen(buf), sizeof(buf) - strlen(buf), true, fmt, ap);
     va_end(ap);
 
     return hal_trace_output((unsigned char *)buf, len);
+}
+
+int hal_trace_color_printf(TRACE_COLOR color, uint32_t lvl, const char *fmt, ...){
+    char buf[110];
+    int len;
+    va_list ap;
+    
+    if(color < BLACK || color > TOTAL_COLOR_NUM){
+        hal_trace_output("hal_trace_color_printf!! invail color\r\n", 40);
+        return -1;
+    }
+
+    sprintf(buf, "\x1b[0;%dm[%08d] ", color, TICKS_TO_MS(hal_sys_timer_get()));
+    
+    va_start(ap, fmt);
+    len = strlen(buf) + hal_trace_format_va(buf + strlen(buf), sizeof(buf) - strlen(buf) - 10, false, fmt, ap);
+    va_end(ap);
+    
+    strcat(buf, "\x1b[0m\r\n");
+    
+    return hal_trace_output((unsigned char *)buf, len + 6);
+
 }
 
 int hal_trace_printf_without_crlf_fix_arg(uint32_t lvl, const char *fmt)
