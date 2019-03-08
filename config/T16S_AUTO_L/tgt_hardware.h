@@ -107,9 +107,9 @@ extern const struct HAL_KEY_GPIOKEY_CFG_T cfg_hw_gpio_key_cfg[CFG_HW_GPIOKEY_NUM
 
 #ifdef __CUSTOMIZE_VERSION_BLE_NAME__
 #ifdef __TWS_CHANNEL_LEFT__
-#define BLE_DEFAULT_NAME  "BES-VERSION-1.3-L"
+#define BLE_DEFAULT_NAME  "BES-VERSION-1.4-L"
 #else 
-#define BLE_DEFAULT_NAME  "BES-VERSION-1.3-R"
+#define BLE_DEFAULT_NAME  "BES-VERSION-1.4-R"
 #endif
 #define BLE_MANU_DATA         "\xFF\xB0\x02\x00\x01"
 #define BLE_MANU_DATA_LEN	5

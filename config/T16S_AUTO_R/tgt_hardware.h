@@ -107,9 +107,9 @@ extern const struct HAL_KEY_GPIOKEY_CFG_T cfg_hw_gpio_key_cfg[CFG_HW_GPIOKEY_NUM
 
 #ifdef __CUSTOMIZE_VERSION_BLE_NAME__
 #ifdef __TWS_CHANNEL_LEFT__
-#define BLE_DEFAULT_NAME  "BES-VERSION-1.3-L"
+#define BLE_DEFAULT_NAME  "BES-VERSION-1.4-L"
 #else 
-#define BLE_DEFAULT_NAME  "BES-VERSION-1.3-R"
+#define BLE_DEFAULT_NAME  "BES-VERSION-1.4-R"
 #endif
 #define BLE_MANU_DATA         "\xFF\xB0\x02\x00\x01"
 #define BLE_MANU_DATA_LEN	5
@@ -127,7 +127,8 @@ extern uint8_t bt_addr[6];
 #define MAX_TWS_INQUIRY_TIMES 	5
 #define PEER_INQUIRE_TIMEOUT	2//Modified by ATX : Leon.He_20190220: reduce peer inquire timeout from 3s to 2s for auto pairing.
 #define CONNECTING_SLAVE_TIMEOUT_RECONNECT_IN_MS                      (12000)
-#define APP_TWS_POSTPONE_TO_START_TWS_SEARCHING_TIMEOUT_IN_MS         5000
+#define INQUIRY_RAND_DELAY_TIME_MS  400
+#define APP_TWS_POSTPONE_TO_START_TWS_SEARCHING_TIMEOUT_IN_MS         6000
 #define MASTER_RECONNECT_PHONE_TIME_S	3000
 
 //5db per step max is 7
