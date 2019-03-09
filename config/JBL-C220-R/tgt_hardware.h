@@ -127,7 +127,8 @@ extern uint8_t bt_addr[6];
 #define MAX_TWS_INQUIRY_TIMES 	5
 #define PEER_INQUIRE_TIMEOUT	2//Modified by ATX : Leon.He_20190220: reduce peer inquire timeout from 3s to 2s for auto pairing.
 #define CONNECTING_SLAVE_TIMEOUT_RECONNECT_IN_MS                      (12000)
-#define APP_TWS_POSTPONE_TO_START_TWS_SEARCHING_TIMEOUT_IN_MS         5000
+#define INQUIRY_RAND_DELAY_TIME_MS  400
+#define APP_TWS_POSTPONE_TO_START_TWS_SEARCHING_TIMEOUT_IN_MS         6000
 #define MASTER_RECONNECT_PHONE_TIME_S	3000
 
 //5db per step max is 7
@@ -148,7 +149,7 @@ extern const int8_t cfg_aud_eq_sbc_band_settings[CFG_HW_AUD_EQ_NUM_BANDS];
 extern  int8_t cfg_hw_aud_eq_band_settings[CFG_HW_AUD_EQ_NUM_BANDS];
 
 //battery info
-#define APP_BATTERY_MIN_MV (3640)
+#define APP_BATTERY_MIN_MV (3600)
 #define APP_BATTERY_PD_MV   (3500)
 
 #define APP_BATTERY_MAX_MV (4210)

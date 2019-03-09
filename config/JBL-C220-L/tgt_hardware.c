@@ -61,7 +61,7 @@ const int8_t cfg_aud_eq_sbc_band_settings[CFG_HW_AUD_EQ_NUM_BANDS] = {0, 0, 0, 0
 const struct CODEC_DAC_VOL_T codec_dac_vol[TGT_VOLUME_LEVEL_QTY] = {
     {TX_PA_GAIN,0x03,-18},
     {TX_PA_GAIN,0x03,-99},
-    {TX_PA_GAIN,0x03,-48},
+    {TX_PA_GAIN,0x03,-45},
     {TX_PA_GAIN,0x03,-42},
     {TX_PA_GAIN,0x03,-39},
     {TX_PA_GAIN,0x03,-36},
