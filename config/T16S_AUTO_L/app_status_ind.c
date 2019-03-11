@@ -5,6 +5,10 @@
 #include "app_status_ind.h"
 #include "string.h"
 
+#ifdef _ATX_FACTORY_MODE_DETECT_
+extern int get_atx_factory_mode_flag(void);
+#endif
+
 static APP_STATUS_INDICATION_T app_status = APP_STATUS_INDICATION_NUM;
 static APP_STATUS_INDICATION_T app_status_ind_filter = APP_STATUS_INDICATION_NUM;
 
@@ -180,6 +184,23 @@ APP_STATUS_INDICATION_CFG_PART(ble_adv_mode) = {
 };
 APP_STATUS_INDICATION_CFG(ble_adv_mode, 1, true, true);
 
+#ifdef _ATX_FACTORY_MODE_DETECT_
+APP_STATUS_INDICATION_CFG_PART(atx_factory_mode_connect) = {
+    {99,1000},
+    {0,1000},
+};
+APP_STATUS_INDICATION_CFG(atx_factory_mode_connect, 1, true, true);
+
+APP_STATUS_INDICATION_CFG_PART(atx_factory_mode_enter) = {
+	{99,200},
+	{0,200},
+	{99,200},
+	{0,1000},
+};
+APP_STATUS_INDICATION_CFG(atx_factory_mode_enter, 1, true, true);
+
+#endif
+
 APP_STATUS_INDICATION_CFG_PART(incomingcall) = {
     {99,200},
     {0,800},
@@ -249,6 +270,11 @@ int app_status_indication_set(APP_STATUS_INDICATION_T status)
 
     if (app_status_ind_filter == status)
         return 0;
+		
+#ifdef _ATX_FACTORY_MODE_DETECT_
+    if(get_atx_factory_mode_flag() && status != APP_STATUS_INDICATION_CONNECTED)
+        status = APP_STATUS_INDICATION_ATX_FACTORY_MODE;
+#endif
 
 	if(app_status_indication_get() == APP_STATUS_INDICATION_CHARGENEED)
 		return 0;
@@ -314,10 +340,22 @@ int app_status_indication_set(APP_STATUS_INDICATION_T status)
 	case APP_STATUS_INDICATION_ANSWERCALL:
 	case APP_STATUS_INDICATION_REFUSECALL:
       case APP_STATUS_INDICATION_CONNECTED:
-          app_pwl_setup(APP_PWL_ID_0, APP_STATUS_INDICATION_CFG_GET(connecting));
-          app_pwl_start(APP_PWL_ID_0);
+#ifdef _ATX_FACTORY_MODE_DETECT_
+		if(get_atx_factory_mode_flag())
+			app_pwl_setup(APP_PWL_ID_0, APP_STATUS_INDICATION_CFG_GET(atx_factory_mode_connect));
+		else 
+#endif
+			app_pwl_setup(APP_PWL_ID_0, APP_STATUS_INDICATION_CFG_GET(connecting));
+			app_pwl_start(APP_PWL_ID_0);
       break;
-      
+
+#ifdef _ATX_FACTORY_MODE_DETECT_
+		case APP_STATUS_INDICATION_ATX_FACTORY_MODE:
+			app_pwl_setup(APP_PWL_ID_0, APP_STATUS_INDICATION_CFG_GET(atx_factory_mode_enter));
+			app_pwl_start(APP_PWL_ID_0);
+		break;
+#endif
+
       case APP_STATUS_INDICATION_CHARGING:
           app_pwl_setup(APP_PWL_ID_0, APP_STATUS_INDICATION_CFG_GET(charge));
           app_pwl_start(APP_PWL_ID_0);

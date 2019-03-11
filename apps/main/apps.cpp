@@ -130,6 +130,56 @@ static void app_reset_phone_paired_list_during_charge(void)
     nv_record_flash_flush();
 }
 
+//Modified by ATX : Haorong.Wu_20190224 add atx factory mode for product line testing
+#ifdef _ATX_FACTORY_MODE_DETECT_
+static int atx_factory_mode_flag = 0;
+#define ATX_FACTORY_MODE_ON 1
+#define ATX_FACTORY_MODE_OFF 0
+
+extern "C" int get_atx_factory_mode_flag(void);
+
+int get_atx_factory_mode_flag(void)
+{
+    TRACE("[%s] atx_factory_mode_flag: %d", __FUNCTION__, atx_factory_mode_flag);
+    return atx_factory_mode_flag;
+}
+
+int atx_factory_mode_check_init(void)
+{
+    TRACE("[%s]", __FUNCTION__);
+    int counter;
+    
+    hal_iomux_init(atx_factory_pin, 1);
+    hal_gpio_pin_set_dir((enum HAL_GPIO_PIN_T)atx_factory_pin[0].pin, HAL_GPIO_DIR_IN, 1);
+    
+    atx_factory_mode_flag = ATX_FACTORY_MODE_OFF;
+    counter = 1000;
+    while(!hal_gpio_pin_get_val((enum HAL_GPIO_PIN_T)atx_factory_pin[0].pin) && counter--)
+    {
+        atx_factory_mode_flag = ATX_FACTORY_MODE_ON;
+    }
+
+    TRACE("[%s] atx_factory_mode_flag: %d", __FUNCTION__, atx_factory_mode_flag);
+    return atx_factory_mode_flag;
+}
+
+int atx_factory_mode_proc(void)
+{
+    TRACE("[%s]", __FUNCTION__);
+    
+    app_status_indication_set(APP_STATUS_INDICATION_ATX_FACTORY_MODE);
+
+    //ble advertising version
+    app_check_version_ble_adv_start();
+
+    //enter bt pairing mode
+    app_bt_send_request(APP_BT_REQ_ACCESS_MODE_SET, BT_DEFAULT_ACCESS_MODE_PAIR, 0,0);
+    
+    //todo
+    return 0;
+}
+#endif
+
 #if defined(__EARPHONE__) && defined(__AUTOPOWEROFF__)
 
 void PairingTransferToConnectable(void);
@@ -1434,6 +1484,10 @@ int app_init(void)
     }
 #endif//end __ENGINEER_MODE_SUPPORT__
     else{
+//Modified by ATX : Haorong.Wu_20190224 add atx factory mode for product line testing
+#ifdef _ATX_FACTORY_MODE_DETECT_
+        atx_factory_mode_check_init();
+#endif
         app_status_indication_set(APP_STATUS_INDICATION_POWERON);
 #ifdef MEDIA_PLAYER_SUPPORT
         app_voice_report(APP_STATUS_INDICATION_POWERON, 0);
@@ -1475,6 +1529,14 @@ int app_init(void)
                     case APP_POWERON_CASE_REBOOT:
                     case APP_POWERON_CASE_ALARM:
                     default:
+//Modified by ATX : Haorong.Wu_20190224 add atx factory mode for product line testing
+#ifdef _ATX_FACTORY_MODE_DETECT_
+                        if(get_atx_factory_mode_flag()){
+                            atx_factory_mode_proc();
+                            TRACE("ATX_FACTORY_MODE_ON!! skip tws operation!!");
+                            break;
+                        }
+#endif
                         app_status_indication_set(APP_STATUS_INDICATION_PAGESCAN);
 #ifdef __TWS__
 

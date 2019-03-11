@@ -89,9 +89,16 @@ extern const uint16_t CFG_HW_ADCKEY_MAP_TABLE[CFG_HW_ADCKEY_NUMBER];
 #define BTA_AV_CO_SBC_MAX_BITPOOL_LIMITED 	43
 
 //gpiokey define
+#ifdef __EXTRA_KEY_FOR_PRODUCT_LINE_
 #define CFG_HW_GPIOKEY_NUM (2)
+#else 
+#define CFG_HW_GPIOKEY_NUM (1)
+#endif
 extern const struct HAL_KEY_GPIOKEY_CFG_T cfg_hw_gpio_key_cfg[CFG_HW_GPIOKEY_NUM];
 
+#ifdef _ATX_FACTORY_MODE_DETECT_
+extern const struct HAL_IOMUX_PIN_FUNCTION_MAP atx_factory_pin[1];
+#endif
 
 #if 0
 // audio codec

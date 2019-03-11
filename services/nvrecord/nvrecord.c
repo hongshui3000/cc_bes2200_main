@@ -447,12 +447,23 @@ static BtStatus nv_record_ddbrec_add(const BtDeviceRecord* param_rec)
     return BT_STATUS_SUCCESS;
 }
 
+//Modified by ATX : Haorong.Wu_20190224 add atx factory mode for product line testing
+#ifdef _ATX_FACTORY_MODE_DETECT_
+extern int get_atx_factory_mode_flag(void);
+#endif
 /*
 this function should be surrounded by OS_LockStack and OS_UnlockStack when call.
 */
 BtStatus nv_record_add(SECTIONS_ADP_ENUM type,void *record)
 {
     BtStatus retstatus = BT_STATUS_FAILED;
+
+#ifdef _ATX_FACTORY_MODE_DETECT_
+    if(get_atx_factory_mode_flag()){
+        TRACE("[%s] skip record add while factory mode on", __func__);
+        return BT_STATUS_SUCCESS;
+    }
+#endif
 
     if ((NULL == record) || (section_none == type))
         return BT_STATUS_FAILED;
