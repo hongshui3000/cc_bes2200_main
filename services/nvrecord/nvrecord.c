@@ -139,10 +139,12 @@ static void nv_record_reinit_with_invalid_userdata(void)
     nv_record_flash_flush();
 }
 
+#ifdef __DUAL_USER_SECTION_BAK__
 static bool is_backup_different_with_userdata(void)
 {
 	return __userdata_start_backup[pos_crc]!= crc32(0,(uint8_t *)(&usrdata_ddblist_pool[pos_heap_contents]),(sizeof(usrdata_ddblist_pool)-(pos_heap_contents*sizeof(uint32_t))));
 }
+#endif
 
 BtStatus nv_record_open(SECTIONS_ADP_ENUM section_id)
 {
@@ -160,8 +162,12 @@ BtStatus nv_record_open(SECTIONS_ADP_ENUM section_id)
             {
             	TRACE("%s,user data valid.",__func__);
             	nv_record_handle_valid_userdata();
+#ifdef __DUAL_USER_SECTION_BAK__		
+#ifndef _QUICK_PWR_ON_//Modified by ATX : Leon.He_20190315: only do pending  dual bak flush, reduce power on time		
 				if(is_backup_different_with_userdata())
 					nv_record_flash_backup();
+#endif
+#endif//__DUAL_USER_SECTION_BAK__				
                 ret_status = BT_STATUS_SUCCESS;
                 break;
             }
@@ -1010,7 +1016,7 @@ void nvrec_fw_version_init(void)
 }
 #endif
 //Modified by ATX : Parke.Wei_20180418
-size_t is_paired_devices_null(void)
+size_t get_paired_device_nums(void)
 {
     size_t entries_len = 0;
 
@@ -1021,6 +1027,10 @@ size_t is_paired_devices_null(void)
         if (NULL != sec)
             entries_len = sec->entries->length;
     }
+
+	if(entries_len<0)
+		entries_len=0;
+	
     return entries_len;      
 
 }

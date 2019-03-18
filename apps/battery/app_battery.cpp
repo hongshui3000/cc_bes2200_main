@@ -595,6 +595,15 @@ static void app_battery_charger_handler(enum PMU_CHARGER_STATUS_T status)
     }
 }
 
+//Modified by ATX : Leon.He_20190314: optimize power on speed
+#ifdef _QUICK_PWR_ON_
+#define CHARGER_PLUG_STATE_DETECT_INTERVAL		8
+#define CHARGER_PLUG_STATE_DETECT_COUNT			10
+#else
+#define CHARGER_PLUG_STATE_DETECT_INTERVAL		20
+#define CHARGER_PLUG_STATE_DETECT_COUNT			10
+#endif
+
 int app_battery_charger_indication_open(void)
 {
     enum APP_BATTERY_CHARGER_T status = APP_BATTERY_CHARGER_QTY;
@@ -606,10 +615,11 @@ int app_battery_charger_indication_open(void)
 
     do{
         status = app_battery_charger_forcegetstatus();
+        cnt++;
         if (status == APP_BATTERY_CHARGER_PLUGIN)
             break;
-        osDelay(20);
-    }while(cnt++<10);
+        osDelay(CHARGER_PLUG_STATE_DETECT_INTERVAL);
+    }while(cnt<CHARGER_PLUG_STATE_DETECT_COUNT);
 
     if (app_battery_ext_charger_detecter_cfg.pin != HAL_IOMUX_PIN_NUM){
         if (!hal_gpio_pin_get_val((enum HAL_GPIO_PIN_T)app_battery_ext_charger_detecter_cfg.pin)){

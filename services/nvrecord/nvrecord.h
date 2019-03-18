@@ -164,7 +164,7 @@ int nvrec_dev_get_dongleaddr(BT_BD_ADDR *dongleaddr);
 #ifdef __SAVE_FW_VERSION_IN_NV_FLASH__
 void nvrec_fw_version_init(void);
 #endif
-size_t is_paired_devices_null(void);
+size_t get_paired_device_nums(void);
 
 #ifdef __cplusplus
 }

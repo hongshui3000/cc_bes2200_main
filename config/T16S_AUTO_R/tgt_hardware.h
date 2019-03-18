@@ -114,9 +114,9 @@ extern const struct HAL_IOMUX_PIN_FUNCTION_MAP atx_factory_pin[1];
 
 #ifdef __CUSTOMIZE_VERSION_BLE_NAME__
 #ifdef __TWS_CHANNEL_LEFT__
-#define BLE_DEFAULT_NAME  "BES-VERSION-1.5-L"
+#define BLE_DEFAULT_NAME  "BES-VERSION-1.8-L"
 #else 
-#define BLE_DEFAULT_NAME  "BES-VERSION-1.5-R"
+#define BLE_DEFAULT_NAME  "BES-VERSION-1.8-R"
 #endif
 #define BLE_MANU_DATA         "\xFF\xB0\x02\x00\x01"
 #define BLE_MANU_DATA_LEN	5

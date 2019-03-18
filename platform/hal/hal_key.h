@@ -20,7 +20,6 @@ extern "C" {
 #define CFG_SW_KEY_LPRESS_THRESH_MS         1000
 #define CFG_SW_KEY_LLPRESS_THRESH_MS        5000
 #define CFG_SW_KEY_DBLCLICK_THRESH_MS       450
-#define CFG_SW_KEY_CHECK_INTERVAL_MS        20
 #endif
 
 #ifndef CFG_SW_KEY_LLPRESS_THRESH_MS
@@ -45,7 +44,7 @@ extern "C" {
 #define CFG_SW_KEY_INIT_LLPRESS_THRESH_MS   10000
 #endif
 #ifndef CFG_SW_KEY_CHECK_INTERVAL_MS
-#define CFG_SW_KEY_CHECK_INTERVAL_MS        40
+#define CFG_SW_KEY_CHECK_INTERVAL_MS        20//Modified by ATX : Leon.He_20190315: reduce the key check interval for reduce double, triple click failed rate
 #endif
 
 enum HAL_KEY_CODE_T {

@@ -199,7 +199,7 @@ void PairingTimeoutHandler(void)
 //    OS_LockStack();
 //    activeCons = MEC(activeCons);
 //    OS_UnlockStack();
-	 pdl_sizes=	is_paired_devices_null();
+	 pdl_sizes=	get_paired_device_nums();
 	 TRACE("!!!pdl_sizes =%d\n",pdl_sizes);
 
 #ifdef __POWER_OFF_AFTER_PAIR_TIMEOUT__

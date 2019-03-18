@@ -378,6 +378,7 @@ void app_audio_switch_flash_flush_req(void)
     int_unlock(lock);
 }
 
+#ifdef __DUAL_USER_SECTION_BAK__
 static void nv_record_postpone_to_save_bak_userdata(void const *param)
 {
     uint32_t lock;
@@ -398,6 +399,7 @@ static void nv_record_start_postpone_to_save_bak_userdata_timer(void)
 	osTimerStop(nv_record_postpone_to_save_bak_userdata_timer);
 	osTimerStart(nv_record_postpone_to_save_bak_userdata_timer, NV_RECORD_POSTPONE_TO_SAVE_BAK_USERDATA_TIMEOUT);
 }
+#endif
 
 static void app_audio_switch_flash_proc(void)
 {
@@ -664,7 +666,8 @@ bool app_audio_list_append(APP_AUDIO_STATUS* aud_status)
                 app_audio_list_clear();
                 list_append(app_audio_conifg.audio_list,  (void*)id_ptr);
             }
-            ASSERT(0 , "#####app_audio_list_append error!!! FIXME!!!! ID = %d, status = %d\n ", id_ptr->id, id_ptr->status);
+            TRACE("<%s> app_audio_conifg.audio_list full skip ID:%d, status = %d", __func__, id_ptr->id, id_ptr->status);
+            //ASSERT(0 , "#####app_audio_list_append error!!! FIXME!!!! ID = %d, status = %d\n ", id_ptr->id, id_ptr->status);
             return true;
         }
         APP_AUDIO_STATUS* id_ptr = (APP_AUDIO_STATUS*)osPoolCAlloc (app_audio_status_mempool);

@@ -127,7 +127,11 @@ static void app_reset_phone_paired_list_during_charge(void)
     DDB_Open(NULL);
     nv_record_env_init();
     app_clear_phone_paired_record();
+    nv_record_touch_cause_flush();
     nv_record_flash_flush();
+#ifdef __DUAL_USER_SECTION_BAK__	
+    nv_record_flash_backup();
+#endif
 }
 
 //Modified by ATX : Haorong.Wu_20190224 add atx factory mode for product line testing
@@ -1630,32 +1634,50 @@ void app_auto_power_off_timer(bool turnon)
         app_stop_10_second_timer(APP_POWEROFF_TIMER_ID);
 }
 
-//Modified by ATX : cc_20180326
+//Modified by ATX : 
 bool app_clear_phone_paired_record(void)
 {
-    int ret;
-    bool handled = false;
-    BtDeviceRecord record;
-    
+    BtDeviceRecord record1;
+	BtStatus ret;
+    size_t len;
+	uint8_t i;
+
     OS_LockStack();
-    for(uint8_t i = 0;i < DDB_RECORD_NUM/2;i++)
+	len=get_paired_device_nums();
+
+    if(len<=0)
     {
-        for(ret = 0; ret < 2; ret++)
-        {
-            if(nv_record_enum_dev_records(ret,&record) == BT_STATUS_SUCCESS)
-            {
-                if(app_bt_has_profile_record(record.bdAddr.addr) == true)
-                {
-                    handled = true;
-                    nv_record_ddbrec_delete(&record.bdAddr);
-                    TRACE("record:%d is phone ---clear record\r\n",ret);
-                }
-            }
-        }
+        OS_UnlockStack();
+		
+        return true;
     }
+
+	for(i=1;i<len+1;i++)
+	{
+		memset(&record1,0x0,sizeof(BtDeviceRecord));
+	    ret = nv_record_enum_dev_records(len-i,&record1);
+		if(BT_STATUS_SUCCESS != ret)
+		{
+		    TRACE("record read fail id[%d]\n",len-i);
+			continue;
+		}
+
+		if(app_bt_has_profile_record(record1.bdAddr.addr)==true)
+        {
+            nv_record_ddbrec_delete(&record1.bdAddr);
+            TRACE("Clear Pdl id[%d]\n",len-i);
+        }
+		else
+		{
+		    TRACE("TWS record  id[%d] not clear\n",len-i);
+		}
+	}
+
     OS_UnlockStack();
-    return handled;
+    return true;
+
 }
+
 //Modified by ATX : Leon.He_20180109: support reset PDL
 void app_reset_paired_device_list(void)
 {
